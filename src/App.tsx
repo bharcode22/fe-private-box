@@ -6,7 +6,9 @@ import { Terms } from './pages/Terms';
 import { Dashboard } from './pages/Dashboard';
 import { AccessFile } from './pages/AccessFile';
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1084639382013-kl0fqv71kk5975dtd6t43cqmmuj4t0bj.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID =
+  import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+  '1084639382013-kl0fqv71kk5975dtd6t43cqmmuj4t0bj.apps.googleusercontent.com';
 
 export const App: React.FC = () => {
   return (

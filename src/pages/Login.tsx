@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { ShieldCheck, HardDrive, Users, ArrowRight, Lock, Sparkles, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ShieldCheck, HardDrive, Users, ArrowRight, Sparkles, AlertCircle } from 'lucide-react';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import api from '../services/api';
+import { Header } from '../components/layout/Header';
+import { Footer } from '../components/layout/Footer';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -101,24 +103,8 @@ export const Login: React.FC = () => {
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute top-1/2 -right-40 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl pointer-events-none"></div>
 
-      {/* Navigation Header */}
-      <header className="border-b border-slate-800/80 bg-slate-950/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-              <HardDrive className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">Private<span className="text-indigo-400">Box</span></span>
-          </div>
-
-          <Link
-            to="/share"
-            className="text-sm font-medium text-slate-300 hover:text-white px-4 py-2 rounded-lg border border-slate-800 hover:border-slate-700 transition flex items-center gap-2"
-          >
-            <Lock className="w-4 h-4 text-indigo-400" /> Unduh via Kode Akses
-          </Link>
-        </div>
-      </header>
+      {/* Navigation Header Component */}
+      <Header />
 
       {/* Hero Content */}
       <main className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -234,10 +220,8 @@ export const Login: React.FC = () => {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950/80 py-6 text-center text-xs text-slate-500">
-        Private Box SaaS File Storage &copy; 2026. All rights reserved.
-      </footer>
+      {/* Footer Component */}
+      <Footer />
     </div>
   );
 };

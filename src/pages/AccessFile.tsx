@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { HardDrive, Download, Lock, Mail, Key, ShieldCheck } from 'lucide-react';
+import { Download, Lock, Mail, Key, ShieldCheck } from 'lucide-react';
 import api from '../services/api';
+import { Navbar } from '../components/layout/Navbar';
+import { Footer } from '../components/layout/Footer';
 
 export const AccessFile: React.FC = () => {
   const [uniqueCode, setUniqueCode] = useState('');
@@ -59,17 +60,8 @@ export const AccessFile: React.FC = () => {
       {/* Background Glow */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl pointer-events-none"></div>
 
-      {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-              <HardDrive className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">Private<span className="text-indigo-400">Box</span></span>
-          </Link>
-        </div>
-      </header>
+      {/* Modular Navbar Header Component */}
+      <Navbar showShareButton={false} />
 
       {/* Download Form */}
       <main className="max-w-md w-full mx-auto px-6 py-12 flex-1 flex flex-col justify-center">
@@ -138,9 +130,8 @@ export const AccessFile: React.FC = () => {
         </div>
       </main>
 
-      <footer className="border-t border-slate-900 bg-slate-950/80 py-6 text-center text-xs text-slate-500">
-        Private Box SaaS File Storage &copy; 2026.
-      </footer>
+      {/* Modular Footer Component */}
+      <Footer />
     </div>
   );
 };
