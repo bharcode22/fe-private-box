@@ -46,7 +46,7 @@ export const Dashboard: React.FC = () => {
     title: string;
     message: string;
     onConfirm: () => void;
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => { } });
 
   const [promptModal, setPromptModal] = useState<{
     isOpen: boolean;
@@ -54,7 +54,7 @@ export const Dashboard: React.FC = () => {
     label?: string;
     initialValue?: string;
     onConfirm: (val: string) => void;
-  }>({ isOpen: false, title: '', initialValue: '', onConfirm: () => {} });
+  }>({ isOpen: false, title: '', initialValue: '', onConfirm: () => { } });
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = Date.now().toString() + Math.random().toString().slice(2, 6);
