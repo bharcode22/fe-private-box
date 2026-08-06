@@ -24,13 +24,13 @@ interface FileListTableProps {
   files: FileItem[];
   formatBytes: (bytes: number) => string;
   onFolderClick: (folderId: string, folderName: string) => void;
-  onGenerateShareCode: (fileId: string, fileName: string) => void;
-  onGenerateFolderShareCode?: (folderId: string, folderName: string) => void;
+  onGenerateShareCode: (fileId: string, fileName: string, fileShares?: any[]) => void;
+  onGenerateFolderShareCode?: (folderId: string, folderName: string, folderShares?: any[]) => void;
   onDownloadPrivate: (fileId: string, fileName: string) => void;
-  onDeleteFolder?: (folderId: string) => void;
-  onRenameFolder?: (folderId: string) => void;
-  onDeleteFile?: (fileId: string) => void;
-  onRenameFile?: (fileId: string) => void;
+  onDeleteFolder?: (folderId: string, folderName?: string) => void;
+  onRenameFolder?: (folderId: string, currentName?: string) => void;
+  onDeleteFile?: (fileId: string, fileName?: string) => void;
+  onRenameFile?: (fileId: string, currentName?: string) => void;
 }
 
 export const FileListTable: React.FC<FileListTableProps> = ({
@@ -75,6 +75,15 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                 </svg>
                 <span className="truncate max-w-xs">{folder.name}</span>
+                {folder.shares && folder.shares.length > 0 && (
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono border ${
+                    folder.shares[0].isActive
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      : 'bg-red-500/10 text-red-400 border-red-500/20'
+                  }`}>
+                    {folder.shares[0].isActive ? `Kode: ${folder.shares[0].uniqueCode}` : `Nonaktif (${folder.shares[0].uniqueCode})`}
+                  </span>
+                )}
               </td>
               <td className="px-6 py-4 text-slate-400">-</td>
               <td className="px-6 py-4 text-slate-400">-</td>
@@ -84,25 +93,27 @@ export const FileListTable: React.FC<FileListTableProps> = ({
               <td className="px-6 py-4 text-right space-x-2">
                 {onGenerateFolderShareCode && (
                   <button
-                    onClick={() => onGenerateFolderShareCode(folder.id, folder.name)}
-                    className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5"
-                    title="Bagikan Folder"
+                    onClick={() => onGenerateFolderShareCode(folder.id, folder.name, folder.shares)}
+                    className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5 cursor-pointer"
+                    title="Manajemen Akses Kode"
                   >
                     <Share2 className="w-3.5 h-3.5" />
                   </button>
                 )}
                 {onRenameFolder && (
                   <button
-                    onClick={() => onRenameFolder(folder.id)}
-                    className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5"
+                    onClick={() => onRenameFolder(folder.id, folder.name)}
+                    className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5 cursor-pointer"
+                    title="Ubah Nama Folder"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
                 )}
                 {onDeleteFolder && (
                   <button
-                    onClick={() => onDeleteFolder(folder.id)}
-                    className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5"
+                    onClick={() => onDeleteFolder(folder.id, folder.name)}
+                    className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5 cursor-pointer"
+                    title="Hapus Folder"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -122,6 +133,15 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                 <td className="px-6 py-4 font-semibold text-white flex items-center gap-3">
                   <Icon className="w-5 h-5 text-indigo-400 flex-shrink-0" />
                   <span className="truncate max-w-xs">{file.fileName}</span>
+                  {file.shares && file.shares.length > 0 && (
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-mono border ${
+                      file.shares[0].isActive
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        : 'bg-red-500/10 text-red-400 border-red-500/20'
+                    }`}>
+                      {file.shares[0].isActive ? `Kode: ${file.shares[0].uniqueCode}` : `Nonaktif (${file.shares[0].uniqueCode})`}
+                    </span>
+                  )}
                 </td>
                 <td className="px-6 py-4 text-slate-400">{formatBytes(Number(file.fileSize))}</td>
                 <td className="px-6 py-4">
@@ -134,9 +154,9 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                 </td>
                 <td className="px-6 py-4 text-right space-x-2">
                   <button
-                    onClick={() => onGenerateShareCode(file.id, file.fileName)}
-                    className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5"
-                    title="Bagikan"
+                    onClick={() => onGenerateShareCode(file.id, file.fileName, file.shares)}
+                    className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5 cursor-pointer"
+                    title="Manajemen Akses Kode"
                   >
                     <Share2 className="w-3.5 h-3.5" />
                   </button>
@@ -149,8 +169,8 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                   </button>
                   {onRenameFile && (
                     <button
-                      onClick={() => onRenameFile(file.id)}
-                      className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5"
+                      onClick={() => onRenameFile(file.id, file.fileName)}
+                      className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5 cursor-pointer"
                       title="Rename"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
@@ -158,8 +178,8 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                   )}
                   {onDeleteFile && (
                     <button
-                      onClick={() => onDeleteFile(file.id)}
-                      className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5"
+                      onClick={() => onDeleteFile(file.id, file.fileName)}
+                      className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5 cursor-pointer"
                       title="Hapus"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

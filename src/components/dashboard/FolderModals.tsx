@@ -7,9 +7,10 @@ interface FolderModalProps {
   onClose: () => void;
   onSuccess: () => void;
   parentId: string | null;
+  onShowToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-export const CreateFolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSuccess, parentId }) => {
+export const CreateFolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSuccess, parentId, onShowToast }) => {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -21,10 +22,12 @@ export const CreateFolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose,
     try {
       await api.post('/api/folders', { name, parentId });
       setName('');
+      if (onShowToast) onShowToast('Folder berhasil dibuat!', 'success');
       onSuccess();
       onClose();
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Gagal membuat folder');
+      const msg = err.response?.data?.error || 'Gagal membuat folder';
+      if (onShowToast) onShowToast(msg, 'error');
     } finally {
       setLoading(false);
     }

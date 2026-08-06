@@ -19,8 +19,16 @@ export const Login: React.FC = () => {
   const [authError, setAuthError] = useState('');
 
   useEffect(() => {
+    const savedUser = localStorage.getItem('pb_user');
+    const token = localStorage.getItem('pb_token');
+
+    if (savedUser && token) {
+      navigate('/dashboard', { replace: true });
+      return;
+    }
+
     fetchSlotStatus();
-  }, []);
+  }, [navigate]);
 
   const fetchSlotStatus = async () => {
     try {
@@ -42,12 +50,10 @@ export const Login: React.FC = () => {
     localStorage.setItem('pb_token', data.token);
     localStorage.setItem('pb_user', JSON.stringify(data.user));
 
-    // Jika pengguna baru mendaftar pertama kali -> arahkan ke Terms
-    // Jika pengguna sudah terdaftar -> langsung ke Dashboard
     if (data.isNewUser) {
-      navigate('/terms');
+      navigate('/terms', { replace: true });
     } else {
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     }
   };
 

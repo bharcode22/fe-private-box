@@ -8,7 +8,7 @@ export const Terms: React.FC = () => {
 
   const handleProceed = () => {
     if (!agreed) return;
-    navigate('/dashboard');
+    navigate('/dashboard', { replace: true });
   };
 
   return (

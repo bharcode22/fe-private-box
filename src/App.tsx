@@ -4,6 +4,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Login } from './pages/Login';
 import { Terms } from './pages/Terms';
 import { Dashboard } from './pages/Dashboard';
+import { Account } from './pages/Account';
 import { AccessFile } from './pages/AccessFile';
 
 const GOOGLE_CLIENT_ID =
@@ -18,6 +19,7 @@ export const App: React.FC = () => {
           <Route path="/" element={<Login />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/account" element={<Account />} />
           <Route path="/share" element={<AccessFile />} />
         </Routes>
       </Router>
