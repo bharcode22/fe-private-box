@@ -5,7 +5,6 @@ export default {
     './src/**/*.{js,ts,jsx,tsx}',
     './frontend/index.html',
     './frontend/src/**/*.{js,ts,jsx,tsx}',
-    './**/*.{html,js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
