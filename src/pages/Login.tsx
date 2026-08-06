@@ -74,28 +74,6 @@ export const Login: React.FC = () => {
     }
   };
 
-  const handleGoogleLoginMock = async () => {
-    setLoggingIn(true);
-    setAuthError('');
-    try {
-      // Menggunakan email & ID tetap agar Akun Demo tidak membuat user acak / menghabiskan kuota slot
-      const demoEmail = `demouser@privatebox.app`;
-      const demoName = `Demo User`;
-      const demoGoogleId = `demo_google_id_fixed_100`;
-
-      const res = await api.post('/api/auth/google', {
-        email: demoEmail,
-        name: demoName,
-        googleId: demoGoogleId,
-      });
-
-      handleAuthSuccess(res.data);
-    } catch (err: any) {
-      setAuthError(err.response?.data?.error || 'Gagal melakukan login demo');
-    } finally {
-      setLoggingIn(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between relative overflow-hidden">
@@ -171,26 +149,7 @@ export const Login: React.FC = () => {
                   />
                 </div>
 
-                <div className="flex items-center gap-2 my-2 text-xs text-slate-500">
-                  <div className="h-px bg-slate-800 flex-1"></div>
-                  <span>Atau uji coba tanpa popup</span>
-                  <div className="h-px bg-slate-800 flex-1"></div>
-                </div>
 
-                <button
-                  onClick={handleGoogleLoginMock}
-                  disabled={loggingIn || loading}
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm transition flex items-center justify-center gap-2 border border-slate-700"
-                >
-                  {loggingIn ? (
-                    <span>Menghubungkan...</span>
-                  ) : (
-                    <>
-                      <span>Masuk Demo (Akun Demo Tetap)</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
               </div>
             )}
           </div>

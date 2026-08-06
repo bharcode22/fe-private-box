@@ -62,7 +62,7 @@ export const Dashboard: React.FC = () => {
 
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFile || isDemoUser) return;
+    if (!selectedFile) return;
 
     const formData = new FormData();
     formData.append('file', selectedFile);
@@ -117,7 +117,7 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const isDemoUser = user?.email === 'demouser@privatebox.app' || user?.email?.startsWith('demo');
+
   const usedBytes = Number(userInfo?.storageUsed || 0);
   const limitBytes = Number(userInfo?.storageLimit || import.meta.env.VITE_FREE_USER_QUOTA_BYTES || 10737418240);
   const quotaPercent = Math.min(100, (usedBytes / limitBytes) * 100);
@@ -136,14 +136,12 @@ export const Dashboard: React.FC = () => {
           limitBytes={limitBytes}
           quotaPercent={quotaPercent}
           daysLeft={daysLeft}
-          isDemoUser={isDemoUser}
           accountStatus={userInfo?.accountStatus}
           formatBytes={formatBytes}
         />
 
         {/* File Upload Widget Component */}
         <FileUploadWidget
-          isDemoUser={isDemoUser}
           accountStatus={userInfo?.accountStatus}
           uploading={uploading}
           selectedFile={selectedFile}

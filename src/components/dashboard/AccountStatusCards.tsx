@@ -6,7 +6,7 @@ interface AccountStatusCardsProps {
   limitBytes: number;
   quotaPercent: number;
   daysLeft: number;
-  isDemoUser: boolean;
+
   accountStatus?: string;
   formatBytes: (bytes: number) => string;
 }
@@ -16,7 +16,6 @@ export const AccountStatusCards: React.FC<AccountStatusCardsProps> = ({
   limitBytes,
   quotaPercent,
   daysLeft,
-  isDemoUser,
   accountStatus,
   formatBytes,
 }) => {
@@ -68,20 +67,16 @@ export const AccountStatusCards: React.FC<AccountStatusCardsProps> = ({
         <div className="flex items-center gap-2">
           <span
             className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-              isDemoUser
-                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                : accountStatus === 'EXPIRED'
+              accountStatus === 'EXPIRED'
                 ? 'bg-red-500/20 text-red-400 border border-red-500/30'
                 : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
             }`}
           >
-            {isDemoUser ? 'DEMO READ-ONLY' : accountStatus || 'ACTIVE'}
+            {accountStatus || 'ACTIVE'}
           </span>
         </div>
         <p className="text-xs text-slate-400">
-          {isDemoUser
-            ? 'Akun Demo Pratinjau. Fitur pengungahan file dinonaktifkan.'
-            : accountStatus === 'EXPIRED'
+          {accountStatus === 'EXPIRED'
             ? 'Akun kedaluwarsa. Hanya dapat mengunduh file lama.'
             : 'Akun aktif penuh untuk unggah & unduh file.'}
         </p>
