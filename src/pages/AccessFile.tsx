@@ -1,14 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Download, Lock, Mail, Key, ShieldCheck } from 'lucide-react';
 import api from '../services/api';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 
 export const AccessFile: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [uniqueCode, setUniqueCode] = useState('');
   const [accessorEmail, setAccessorEmail] = useState('');
   const [downloading, setDownloading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  useEffect(() => {
+    const codeParam = searchParams.get('code');
+    if (codeParam) {
+      setUniqueCode(codeParam.trim().toUpperCase());
+    }
+  }, [searchParams]);
 
   const handleDownloadPublic = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,13 +39,40 @@ export const AccessFile: React.FC = () => {
         { responseType: 'blob' }
       );
 
-      const contentDisposition = res.headers['content-disposition'];
-      let fileName = `file_download_${uniqueCode}.bin`;
+      const getHeader = (name: string) => {
+        if (!res.headers) return null;
+        if (typeof res.headers.get === 'function') return res.headers.get(name);
+        return res.headers[name.toLowerCase()] || res.headers[name];
+      };
+
+      const contentDisposition = getHeader('content-disposition');
+      let fileName = '';
+
       if (contentDisposition) {
-        const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-        if (fileNameMatch && fileNameMatch[1]) {
-          fileName = fileNameMatch[1];
+        // 1. Try filename*=UTF-8''...
+        const filenameStarMatch = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+        if (filenameStarMatch && filenameStarMatch[1]) {
+          try {
+            fileName = decodeURIComponent(filenameStarMatch[1]);
+          } catch (_) {
+            fileName = filenameStarMatch[1];
+          }
         }
+        // 2. Try filename="..." or filename=...
+        if (!fileName) {
+          const fileNameMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
+          if (fileNameMatch && fileNameMatch[1]) {
+            try {
+              fileName = decodeURIComponent(fileNameMatch[1]);
+            } catch (_) {
+              fileName = fileNameMatch[1];
+            }
+          }
+        }
+      }
+
+      if (!fileName) {
+        fileName = `download_${uniqueCode.trim().toUpperCase()}`;
       }
 
       const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -47,9 +83,19 @@ export const AccessFile: React.FC = () => {
       link.click();
       link.remove();
     } catch (err: any) {
-      setErrorMsg(
-        'Gagal mengunduh file. Pastikan Kode Unik benar dan masih aktif.'
-      );
+      let message = 'Gagal mengunduh file/folder. Pastikan Kode Unik benar dan masih aktif.';
+      if (err.response?.data) {
+        if (err.response.data instanceof Blob) {
+          try {
+            const text = await err.response.data.text();
+            const json = JSON.parse(text);
+            if (json.error) message = json.error;
+          } catch (_) {}
+        } else if (typeof err.response.data === 'object' && err.response.data.error) {
+          message = err.response.data.error;
+        }
+      }
+      setErrorMsg(message);
     } finally {
       setDownloading(false);
     }
@@ -70,8 +116,8 @@ export const AccessFile: React.FC = () => {
             <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 mx-auto">
               <Lock className="w-6 h-6" />
             </div>
-            <h1 className="text-2xl font-extrabold text-white">Unduh File Terproteksi</h1>
-            <p className="text-xs text-slate-400">Masukkan kode unik dan email Anda untuk mengunduh file yang dibagikan.</p>
+            <h1 className="text-2xl font-extrabold text-white">Unduh File / Folder Terproteksi</h1>
+            <p className="text-xs text-slate-400">Masukkan kode unik dan email Anda untuk mengunduh file atau folder (ZIP) yang dibagikan.</p>
           </div>
 
           {errorMsg && (
@@ -83,7 +129,7 @@ export const AccessFile: React.FC = () => {
           <form onSubmit={handleDownloadPublic} className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <Key className="w-3.5 h-3.5 text-indigo-400" /> Kode Unik File
+                <Key className="w-3.5 h-3.5 text-indigo-400" /> Kode Unik File / Folder
               </label>
               <input
                 type="text"
@@ -109,7 +155,7 @@ export const AccessFile: React.FC = () => {
 
             <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 text-slate-400 text-[11px] flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-              <span>Email Anda akan dicatat dalam log akses pemilik file untuk transparansi keamanan.</span>
+              <span>Email Anda akan dicatat dalam log akses pemilik file/folder untuk transparansi keamanan.</span>
             </div>
 
             <button
@@ -122,7 +168,7 @@ export const AccessFile: React.FC = () => {
               ) : (
                 <>
                   <Download className="w-4 h-4" />
-                  <span>Verifikasi & Unduh File</span>
+                  <span>Verifikasi & Unduh</span>
                 </>
               )}
             </button>
