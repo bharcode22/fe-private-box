@@ -202,9 +202,9 @@ export const Login: React.FC = () => {
             <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 mb-4">
               <HardDrive className="w-6 h-6" />
             </div>
-            <h3 className="text-lg font-bold text-white mb-1">Penggabungan 2 Akun Drive</h3>
+            <h3 className="text-lg font-bold text-white mb-1">Direct Google Drive Storage</h3>
             <p className="text-slate-400 text-sm">
-              Sistem backend otomatis membagi beban penyimpanan file (*load balancing*) antara 2 Service Account Google Drive terpisah.
+              Sistem backend terintegrasi langsung dengan Google Drive Cloud Storage (15 GB Cloud) secara aman dan transparan.
             </p>
           </div>
 
