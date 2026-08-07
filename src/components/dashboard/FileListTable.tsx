@@ -1,5 +1,7 @@
-import React from 'react';
-import { FileText, Share2, Download, Image, Video, Music, FileQuestion, Trash2, Edit2, UploadCloud, FolderPlus, CheckSquare, Folder } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { FileText, Share2, Download, Image, Video, Music, FileQuestion, Trash2, Edit2, UploadCloud, FolderPlus, CheckSquare, Folder, LayoutGrid, List, Eye, Loader2 } from 'lucide-react';
+import api from '../../services/api';
+import { FileListToolbar } from './FileListToolbar';
 
 export interface FolderItem {
   id: string;
@@ -16,6 +18,7 @@ export interface FileItem {
   storageAccountId: string;
   createdAt: string;
   category?: string;
+  mimeType?: string;
   shares?: { uniqueCode: string; isActive: boolean }[];
 }
 
@@ -35,6 +38,21 @@ interface FileListTableProps {
   onUploadClick?: () => void;
   onCreateFolderClick?: () => void;
   onBatchDelete?: (selectedFileIds: string[], selectedFolderIds: string[]) => void;
+  onPreviewFile?: (file: FileItem) => void;
+  hasMore?: boolean;
+  loadingMore?: boolean;
+  onLoadMore?: () => void;
+  onResetFilter?: () => void;
+  isFiltered?: boolean;
+  viewMode?: 'table' | 'grid';
+  onViewModeChange?: (mode: 'table' | 'grid') => void;
+  isSelectionMode?: boolean;
+  onToggleSelectionMode?: () => void;
+  selectedFolderIds?: string[];
+  selectedFileIds?: string[];
+  onToggleFolderSelection?: (id: string) => void;
+  onToggleFileSelection?: (id: string) => void;
+  showToolbar?: boolean;
 }
 
 // Helper to get distinct icon and color styles per category
@@ -71,6 +89,100 @@ const getFileCategoryStyle = (category?: string) => {
         textHoverClass: 'group-hover:text-indigo-300',
       };
   }
+};
+
+const ThumbnailCache = new Map<string, string>();
+
+const FileThumbnail: React.FC<{
+  file: FileItem;
+  className?: string;
+  iconClassName?: string;
+}> = ({ file, className = "w-10 h-10", iconClassName = "w-5 h-5" }) => {
+  const [thumbUrl, setThumbUrl] = useState<string | null>(() => ThumbnailCache.get(file.id) || null);
+  const [loading, setLoading] = useState<boolean>(!ThumbnailCache.has(file.id));
+  const [failed, setFailed] = useState<boolean>(false);
+
+  const category = file.category || 'document';
+  const ext = file.fileName.substring(file.fileName.lastIndexOf('.')).toLowerCase();
+  const isImage = category === 'image' || file.mimeType?.startsWith('image/') || ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'].includes(ext);
+  const isVideo = category === 'video' || file.mimeType?.startsWith('video/') || ['.mp4', '.webm', '.ogg', '.mov'].includes(ext);
+
+  const { Icon, colorClass } = getFileCategoryStyle(category);
+
+  useEffect(() => {
+    if (!isImage && !isVideo) return;
+    if (ThumbnailCache.has(file.id)) {
+      setThumbUrl(ThumbnailCache.get(file.id)!);
+      setLoading(false);
+      return;
+    }
+
+    let active = true;
+    const loadThumb = async () => {
+      try {
+        setLoading(true);
+        const res = await api.get(`/api/files/${file.id}/preview`, { responseType: 'blob' });
+        if (!active) return;
+        const blob = res.data as Blob;
+        const urlCreated = URL.createObjectURL(blob);
+        ThumbnailCache.set(file.id, urlCreated);
+        setThumbUrl(urlCreated);
+      } catch (err) {
+        if (active) setFailed(true);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    loadThumb();
+
+    return () => {
+      active = false;
+    };
+  }, [file.id, isImage, isVideo]);
+
+  if ((isImage || isVideo) && thumbUrl && !failed) {
+    if (isImage) {
+      return (
+        <img
+          src={thumbUrl}
+          alt={file.fileName}
+          className={`${className} object-cover rounded-xl border border-slate-700/60 shadow-sm flex-shrink-0`}
+        />
+      );
+    }
+    if (isVideo) {
+      return (
+        <div className={`relative ${className} rounded-xl overflow-hidden border border-slate-700/60 shadow-sm bg-slate-950 flex-shrink-0`}>
+          <video
+            src={thumbUrl}
+            className="w-full h-full object-cover pointer-events-none"
+            muted
+            preload="metadata"
+          />
+          <div className="absolute inset-0 bg-slate-950/30 flex items-center justify-center">
+            <div className="p-1 rounded-full bg-rose-500/80 text-white shadow-md">
+              <Video className="w-3.5 h-3.5" />
+            </div>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  if (loading && (isImage || isVideo) && !failed) {
+    return (
+      <div className={`${className} rounded-xl border flex items-center justify-center ${colorClass} animate-pulse flex-shrink-0`}>
+        <Loader2 className={`${iconClassName} animate-spin`} />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${className} rounded-xl border flex items-center justify-center flex-shrink-0 ${colorClass}`}>
+      <Icon className={iconClassName} />
+    </div>
+  );
 };
 
 // Custom Animated Modern Checkbox Component
@@ -123,10 +235,83 @@ export const FileListTable: React.FC<FileListTableProps> = ({
   onUploadClick,
   onCreateFolderClick,
   onBatchDelete,
+  onPreviewFile,
+  hasMore,
+  loadingMore,
+  onLoadMore,
+  onResetFilter,
+  isFiltered = false,
+  viewMode: controlledViewMode,
+  onViewModeChange: controlledOnViewModeChange,
+  isSelectionMode: controlledIsSelectionMode,
+  onToggleSelectionMode: controlledOnToggleSelectionMode,
+  selectedFolderIds: controlledSelectedFolderIds,
+  selectedFileIds: controlledSelectedFileIds,
+  onToggleFolderSelection: controlledOnToggleFolderSelection,
+  onToggleFileSelection: controlledOnToggleFileSelection,
+  showToolbar = true,
 }) => {
-  const [isSelectionMode, setIsSelectionMode] = React.useState<boolean>(false);
-  const [selectedFolderIds, setSelectedFolderIds] = React.useState<string[]>([]);
-  const [selectedFileIds, setSelectedFileIds] = React.useState<string[]>([]);
+  const [internalIsSelectionMode, setInternalIsSelectionMode] = useState<boolean>(false);
+  const [internalSelectedFolderIds, setInternalSelectedFolderIds] = useState<string[]>([]);
+  const [internalSelectedFileIds, setInternalSelectedFileIds] = useState<string[]>([]);
+  const [internalViewMode, setInternalViewMode] = useState<'table' | 'grid'>(() => {
+    return (localStorage.getItem('pb_view_mode') as 'table' | 'grid') || 'table';
+  });
+
+  const isSelectionMode = controlledIsSelectionMode ?? internalIsSelectionMode;
+  const setIsSelectionMode = (val: boolean) => {
+    if (controlledOnToggleSelectionMode) {
+      controlledOnToggleSelectionMode();
+    } else {
+      setInternalIsSelectionMode(val);
+    }
+  };
+
+  const selectedFolderIds = controlledSelectedFolderIds ?? internalSelectedFolderIds;
+  const setSelectedFolderIds = (val: string[] | ((prev: string[]) => string[])) => {
+    if (typeof val === 'function') {
+      setInternalSelectedFolderIds(val);
+    } else {
+      setInternalSelectedFolderIds(val);
+    }
+  };
+
+  const selectedFileIds = controlledSelectedFileIds ?? internalSelectedFileIds;
+  const setSelectedFileIds = (val: string[] | ((prev: string[]) => string[])) => {
+    if (typeof val === 'function') {
+      setInternalSelectedFileIds(val);
+    } else {
+      setInternalSelectedFileIds(val);
+    }
+  };
+
+  const viewMode = controlledViewMode ?? internalViewMode;
+  const setViewMode = controlledOnViewModeChange ?? setInternalViewMode;
+
+  const observerTargetRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem('pb_view_mode', viewMode);
+  }, [viewMode]);
+
+  useEffect(() => {
+    const target = observerTargetRef.current;
+    if (!target || !hasMore || loadingMore || !onLoadMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          onLoadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(target);
+    return () => {
+      observer.unobserve(target);
+    };
+  }, [hasMore, loadingMore, onLoadMore]);
 
   const totalSelected = selectedFolderIds.length + selectedFileIds.length;
   const totalItems = folders.length + files.length;
@@ -134,26 +319,53 @@ export const FileListTable: React.FC<FileListTableProps> = ({
 
   const toggleSelectAll = () => {
     if (isAllSelected) {
-      setSelectedFolderIds([]);
-      setSelectedFileIds([]);
+      setInternalSelectedFolderIds([]);
+      setInternalSelectedFileIds([]);
     } else {
-      setSelectedFolderIds(folders.map((f) => f.id));
-      setSelectedFileIds(files.map((f) => f.id));
+      setInternalSelectedFolderIds(folders.map((f) => f.id));
+      setInternalSelectedFileIds(files.map((f) => f.id));
     }
   };
 
-  const toggleFolderSelection = (id: string) => {
-    setSelectedFolderIds((prev) =>
+  const toggleFolderSelection = controlledOnToggleFolderSelection ?? ((id: string) => {
+    setInternalSelectedFolderIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
-  };
+  });
 
-  const toggleFileSelection = (id: string) => {
-    setSelectedFileIds((prev) =>
+  const toggleFileSelection = controlledOnToggleFileSelection ?? ((id: string) => {
+    setInternalSelectedFileIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
-  };
+  });
+
   if (folders.length === 0 && files.length === 0) {
+    if (isFiltered) {
+      return (
+        <div className="p-10 sm:p-16 text-center space-y-4">
+          <div className="w-16 h-16 rounded-3xl bg-slate-900/90 border border-slate-800 flex items-center justify-center mx-auto text-amber-400 shadow-inner">
+            <FileQuestion className="w-8 h-8" />
+          </div>
+          <div className="space-y-1">
+            <h4 className="text-base font-bold text-slate-200">Tidak ada file yang cocok</h4>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+              Coba ubah kata kunci pencarian Anda atau ganti filter kategori.
+            </p>
+          </div>
+          {onResetFilter && (
+            <div className="pt-2">
+              <button
+                onClick={onResetFilter}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition inline-flex items-center gap-2 border border-slate-700 cursor-pointer active:scale-95"
+              >
+                <span>Reset Filter</span>
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     return (
       <div className="p-10 sm:p-16 text-center space-y-4">
         <div className="w-16 h-16 rounded-3xl bg-slate-900/90 border border-slate-800 flex items-center justify-center mx-auto text-slate-500 shadow-inner">
@@ -191,272 +403,254 @@ export const FileListTable: React.FC<FileListTableProps> = ({
 
   return (
     <div>
-      {/* Top Table Toolbar: Mode Pilih Toggle Button */}
-      <div className="flex items-center justify-between p-3.5 px-4 sm:px-6 bg-slate-900/60 border-b border-slate-800/80">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              const nextMode = !isSelectionMode;
-              setIsSelectionMode(nextMode);
-              if (!nextMode) {
-                setSelectedFolderIds([]);
-                setSelectedFileIds([]);
-              }
-            }}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 border cursor-pointer active:scale-95 ${isSelectionMode
-              ? 'bg-indigo-600/20 text-indigo-300 border-indigo-500/50 shadow-sm font-extrabold'
-              : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 border-slate-700/80'
-              }`}
-          >
-            <CheckSquare className={`w-4 h-4 ${isSelectionMode ? 'text-indigo-400' : 'text-slate-400'}`} />
-            <span>{isSelectionMode ? 'Selesai Pilih' : 'Pilih Item'}</span>
-          </button>
+      {/* Modular FileListToolbar Component */}
+      {showToolbar && (
+        <FileListToolbar
+          isSelectionMode={isSelectionMode}
+          onToggleSelectionMode={() => {
+            const nextMode = !isSelectionMode;
+            setIsSelectionMode(nextMode);
+            if (!nextMode) {
+              setSelectedFolderIds([]);
+              setSelectedFileIds([]);
+            }
+          }}
+          isAllSelected={isAllSelected}
+          onToggleSelectAll={toggleSelectAll}
+          totalSelected={totalSelected}
+          totalItems={totalItems}
+          onBatchDelete={() => {
+            if (onBatchDelete) onBatchDelete(selectedFileIds, selectedFolderIds);
+          }}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        />
+      )}
 
-          {isSelectionMode && (
-            <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
-              <CustomCheckbox
-                checked={isAllSelected}
-                onChange={toggleSelectAll}
-                title="Pilih Semua Item"
-              />
-              <span
-                onClick={toggleSelectAll}
-                className="text-xs font-bold text-slate-300 cursor-pointer hover:text-white transition select-none"
-              >
-                Pilih Semua ({totalItems})
-              </span>
+      {/* Grid View Layout (Tampilan Petak) */}
+      {viewMode === 'grid' ? (
+        <div className="p-4 sm:p-6 space-y-6">
+          {/* Folders Grid Section */}
+          {folders.length > 0 && (
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 px-1">
+                Folder ({folders.length})
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {folders.map((folder) => (
+                  <div
+                    key={folder.id}
+                    onClick={() => {
+                      if (isSelectionMode) {
+                        toggleFolderSelection(folder.id);
+                      } else {
+                        onFolderClick(folder.id, folder.name);
+                      }
+                    }}
+                    className={`relative p-4 rounded-2xl border transition-all duration-200 flex flex-col justify-between space-y-3 cursor-pointer group ${selectedFolderIds.includes(folder.id)
+                      ? 'bg-amber-950/30 border-amber-500/80 shadow-lg shadow-amber-500/10'
+                      : 'bg-slate-900/70 border-slate-800/80 hover:border-amber-500/40 hover:bg-slate-800/60 shadow-md'
+                      }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center space-x-3 min-w-0">
+                        {isSelectionMode && (
+                          <CustomCheckbox
+                            checked={selectedFolderIds.includes(folder.id)}
+                            onChange={() => toggleFolderSelection(folder.id)}
+                          />
+                        )}
+                        <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-110 transition flex-shrink-0">
+                          <Folder className="w-6 h-6" />
+                        </div>
+                        <div className="min-w-0">
+                          <h5 className="font-bold text-sm text-slate-100 group-hover:text-amber-300 transition truncate" title={folder.name}>
+                            {folder.name}
+                          </h5>
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            {new Date(folder.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                          </p>
+                        </div>
+                      </div>
+
+                      {folder.shares && folder.shares.length > 0 && (
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-mono border flex-shrink-0 ${folder.shares[0].isActive
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : 'bg-red-500/10 text-red-400 border-red-500/20'
+                            }`}
+                        >
+                          {folder.shares[0].isActive ? 'Shared' : 'Off'}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-slate-800/60" onClick={(e) => e.stopPropagation()}>
+                      {onDownloadFolder && (
+                        <button
+                          disabled={isSelectionMode}
+                          onClick={() => onDownloadFolder(folder.id, folder.name)}
+                          className="p-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 transition disabled:opacity-40"
+                          title="Unduh Folder"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {onGenerateFolderShareCode && (
+                        <button
+                          disabled={isSelectionMode}
+                          onClick={() => onGenerateFolderShareCode(folder.id, folder.name, folder.shares)}
+                          className="p-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 transition disabled:opacity-40"
+                          title="Bagikan Folder"
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {onRenameFolder && (
+                        <button
+                          disabled={isSelectionMode}
+                          onClick={() => onRenameFolder(folder.id, folder.name)}
+                          className="p-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 transition disabled:opacity-40"
+                          title="Ubah Nama"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {onDeleteFolder && (
+                        <button
+                          disabled={isSelectionMode}
+                          onClick={() => onDeleteFolder(folder.id, folder.name)}
+                          className="p-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 transition disabled:opacity-40"
+                          title="Hapus"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Files Grid Section */}
+          {files.length > 0 && (
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 px-1">
+                File ({files.length})
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {files.map((file) => {
+                  const { Icon, colorClass, textHoverClass } = getFileCategoryStyle(file.category);
+
+                  return (
+                    <div
+                      key={file.id}
+                      onClick={() => {
+                        if (isSelectionMode) {
+                          toggleFileSelection(file.id);
+                        } else if (onPreviewFile) {
+                          onPreviewFile(file);
+                        }
+                      }}
+                      className={`relative p-3.5 rounded-2xl border transition-all duration-200 flex flex-col justify-between cursor-pointer group ${selectedFileIds.includes(file.id)
+                        ? 'bg-indigo-950/40 border-indigo-500 shadow-lg shadow-indigo-500/10'
+                        : 'bg-slate-900/70 border-slate-800/80 hover:border-indigo-500/40 hover:bg-slate-800/60 shadow-md'
+                        }`}
+                    >
+                      {/* Large Visual Thumbnail Box */}
+                      <div className="relative w-full h-44 rounded-xl overflow-hidden bg-slate-950/90 border border-slate-800/80 flex items-center justify-center mb-3 group-hover:border-slate-700 transition">
+                        <FileThumbnail file={file} className="w-full h-full" iconClassName="w-10 h-10" />
+
+                        {/* Selection Checkbox Overlay */}
+                        {isSelectionMode && (
+                          <div className="absolute top-2.5 left-2.5 z-10" onClick={(e) => e.stopPropagation()}>
+                            <CustomCheckbox
+                              checked={selectedFileIds.includes(file.id)}
+                              onChange={() => toggleFileSelection(file.id)}
+                            />
+                          </div>
+                        )}
+
+                        {/* Share Badge Overlay */}
+                        {file.shares && file.shares.length > 0 && (
+                          <span
+                            className={`absolute top-2.5 right-2.5 px-2 py-0.5 rounded text-[10px] font-mono border backdrop-blur-md shadow-md ${file.shares[0].isActive
+                              ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40'
+                              : 'bg-red-950/80 text-red-300 border-red-500/40'
+                              }`}
+                          >
+                            {file.shares[0].isActive ? 'Shared' : 'Off'}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* File Info */}
+                      <div className="space-y-1 mb-2 px-0.5">
+                        <h5 className={`font-bold text-sm text-slate-100 truncate transition ${textHoverClass}`} title={file.fileName}>
+                          {file.fileName}
+                        </h5>
+                        <div className="flex items-center justify-between text-[11px] text-slate-400">
+                          <span>{formatBytes(Number(file.fileSize))}</span>
+                          <span>{new Date(file.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+                        </div>
+                      </div>
+
+                      {/* Actions Footer */}
+                      <div className="flex items-center justify-end gap-1.5 pt-2.5 border-t border-slate-800/60" onClick={(e) => e.stopPropagation()}>
+
+                        <button
+                          disabled={isSelectionMode}
+                          onClick={() => onDownloadPrivate(file.id, file.fileName)}
+                          className="p-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition disabled:opacity-40 shadow-sm"
+                          title="Unduh File"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          disabled={isSelectionMode}
+                          onClick={() => onGenerateShareCode(file.id, file.fileName, file.shares)}
+                          className="p-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 transition disabled:opacity-40"
+                          title="Bagikan"
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                        </button>
+                        {onRenameFile && (
+                          <button
+                            disabled={isSelectionMode}
+                            onClick={() => onRenameFile(file.id, file.fileName)}
+                            className="p-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 transition disabled:opacity-40"
+                            title="Ubah Nama"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        {onDeleteFile && (
+                          <button
+                            disabled={isSelectionMode}
+                            onClick={() => onDeleteFile(file.id, file.fileName)}
+                            className="p-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 transition disabled:opacity-40"
+                            title="Hapus"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
-
-        {isSelectionMode && (
-          <div className="flex items-center gap-2">
-            {totalSelected > 0 && (
-              <span className="text-xs font-bold text-indigo-300 bg-indigo-500/10 px-2.5 py-1 rounded-lg border border-indigo-500/30">
-                {totalSelected} Dipilih
-              </span>
-            )}
-            {onBatchDelete && totalSelected > 0 && (
-              <button
-                onClick={() => onBatchDelete(selectedFileIds, selectedFolderIds)}
-                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-red-600/20 active:scale-95"
-              >
-                <Trash2 className="w-4 h-4" />
-                <span>Hapus ({totalSelected})</span>
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Mobile View: Cards Layout (screens < 768px) */}
-      <div className="block md:hidden divide-y divide-slate-800/80">
-        {/* Folders Mobile Cards */}
-        {folders.map((folder) => (
-          <div
-            key={folder.id}
-            onClick={() => {
-              if (isSelectionMode) {
-                toggleFolderSelection(folder.id);
-              } else {
-                onFolderClick(folder.id, folder.name);
-              }
-            }}
-            className={`p-4 transition space-y-3 cursor-pointer group ${selectedFolderIds.includes(folder.id) ? 'bg-amber-950/20 border-l-4 border-amber-500' : 'hover:bg-slate-900/60'
-              }`}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center gap-3 min-w-0">
-                {isSelectionMode && (
-                  <CustomCheckbox
-                    checked={selectedFolderIds.includes(folder.id)}
-                    onChange={() => toggleFolderSelection(folder.id)}
-                  />
-                )}
-                <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-110 transition flex-shrink-0">
-                  <Folder className="w-5 h-5" />
-                </div>
-                <div className="min-w-0">
-                  <h4 className="font-semibold text-sm text-white group-hover:text-amber-300 transition truncate">{folder.name}</h4>
-                  <p className="text-[11px] text-slate-400">
-                    Folder • {new Date(folder.createdAt).toLocaleDateString('id-ID')}
-                  </p>
-                </div>
-              </div>
-              {folder.shares && folder.shares.length > 0 && (
-                <span
-                  className={`px-2 py-0.5 rounded text-[10px] font-mono border flex-shrink-0 ${folder.shares[0].isActive
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                    : 'bg-red-500/10 text-red-400 border-red-500/20'
-                    }`}
-                >
-                  {folder.shares[0].isActive ? `Aktif: ${folder.shares[0].uniqueCode}` : `Nonaktif (${folder.shares[0].uniqueCode})`}
-                </span>
-              )}
-            </div>
-
-            {/* Folder Mobile Actions */}
-            <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-800/40" onClick={(e) => e.stopPropagation()}>
-              {onDownloadFolder && (
-                <button
-                  disabled={isSelectionMode}
-                  onClick={() => onDownloadFolder(folder.id, folder.name)}
-                  className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Unduh</span>
-                </button>
-              )}
-              {onGenerateFolderShareCode && (
-                <button
-                  disabled={isSelectionMode}
-                  onClick={() => onGenerateFolderShareCode(folder.id, folder.name, folder.shares)}
-                  className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                  <span>Bagikan</span>
-                </button>
-              )}
-              {onRenameFolder && (
-                <button
-                  disabled={isSelectionMode}
-                  onClick={() => onRenameFolder(folder.id, folder.name)}
-                  className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                  <span>Ubah Nama</span>
-                </button>
-              )}
-              {onDeleteFolder && (
-                <button
-                  disabled={isSelectionMode}
-                  onClick={() => onDeleteFolder(folder.id, folder.name)}
-                  className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Hapus</span>
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
-
-        {/* Files Mobile Cards */}
-        {files.map((file) => {
-          const { Icon, colorClass, textHoverClass } = getFileCategoryStyle(file.category);
-
-          return (
-            <div
-              key={file.id}
-              onClick={() => {
-                if (isSelectionMode) toggleFileSelection(file.id);
-              }}
-              className={`p-4 transition space-y-3 ${selectedFileIds.includes(file.id) ? 'bg-indigo-950/20 border-l-4 border-indigo-500' : 'hover:bg-slate-900/40'
-                }`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-3 min-w-0">
-                  {isSelectionMode && (
-                    <CustomCheckbox
-                      checked={selectedFileIds.includes(file.id)}
-                      onChange={() => toggleFileSelection(file.id)}
-                    />
-                  )}
-                  <div className={`p-2 rounded-xl border flex-shrink-0 ${colorClass}`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className={`font-semibold text-sm text-white truncate max-w-[180px] transition ${textHoverClass}`}>
-                      {file.fileName}
-                    </h4>
-                    <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
-                      <span>{formatBytes(Number(file.fileSize))}</span>
-                      <span>•</span>
-                      <span>{new Date(file.createdAt).toLocaleDateString('id-ID')}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {file.shares && file.shares.length > 0 && (
-                  <span
-                    className={`px-2 py-0.5 rounded text-[10px] font-mono border flex-shrink-0 ${file.shares[0].isActive
-                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                      : 'bg-red-500/10 text-red-400 border-red-500/20'
-                      }`}
-                  >
-                    {file.shares[0].isActive ? `Aktif: ${file.shares[0].uniqueCode}` : `Nonaktif (${file.shares[0].uniqueCode})`}
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-800/40 flex-wrap" onClick={(e) => e.stopPropagation()}>
-                <button
-                  disabled={isSelectionMode}
-                  onClick={() => onDownloadPrivate(file.id, file.fileName)}
-                  className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Unduh</span>
-                </button>
-                <button
-                  disabled={isSelectionMode}
-                  onClick={() => onGenerateShareCode(file.id, file.fileName, file.shares)}
-                  className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                  <span>Bagikan</span>
-                </button>
-                {onRenameFile && (
-                  <button
-                    disabled={isSelectionMode}
-                    onClick={() => onRenameFile(file.id, file.fileName)}
-                    className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                    <span>Ubah Nama</span>
-                  </button>
-                )}
-                {onDeleteFile && (
-                  <button
-                    disabled={isSelectionMode}
-                    onClick={() => onDeleteFile(file.id, file.fileName)}
-                    className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Hapus</span>
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Desktop View: Table Layout (screens >= 768px) */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full text-left text-sm text-slate-300">
-          <thead className="bg-slate-900/80 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
-            <tr>
-              {isSelectionMode && (
-                <th className="px-4 py-4 w-12 text-center">
-                  <CustomCheckbox
-                    checked={isAllSelected}
-                    onChange={toggleSelectAll}
-                    title="Pilih Semua Item"
-                  />
-                </th>
-              )}
-              <th className="px-6 py-4 text-center">Nama File / Folder</th>
-              <th className="px-6 py-4 text-center">Status Share</th>
-              <th className="px-6 py-4 text-center">Ukuran</th>
-              <th className="px-6 py-4 text-center">Tanggal Unggah</th>
-              <th className="px-6 py-4 text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-800/60">
+      ) : (
+        /* Table View Layout (Tampilan Tabel Default) */
+        <>
+          {/* Mobile View: Cards Layout (screens < 768px) */}
+          <div className="block md:hidden divide-y divide-slate-800/80">
+            {/* Folders Mobile Cards */}
             {folders.map((folder) => (
-              <tr
+              <div
                 key={folder.id}
                 onClick={() => {
                   if (isSelectionMode) {
@@ -465,168 +659,400 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                     onFolderClick(folder.id, folder.name);
                   }
                 }}
-                className={`transition cursor-pointer group ${selectedFolderIds.includes(folder.id) ? 'bg-amber-950/20' : 'hover:bg-slate-900/60'
+                className={`p-4 transition space-y-3 cursor-pointer group ${selectedFolderIds.includes(folder.id) ? 'bg-amber-950/20 border-l-4 border-amber-500' : 'hover:bg-slate-900/60'
                   }`}
               >
-                {isSelectionMode && (
-                  <td className="px-4 py-4 text-center" onClick={(e) => e.stopPropagation()}>
-                    <CustomCheckbox
-                      checked={selectedFolderIds.includes(folder.id)}
-                      onChange={() => toggleFolderSelection(folder.id)}
-                    />
-                  </td>
-                )}
-                <td className="px-6 py-4 font-semibold text-white flex items-center gap-3">
-                  <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-110 transition flex-shrink-0">
-                    <Folder className="w-4 h-4" />
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {isSelectionMode && (
+                      <CustomCheckbox
+                        checked={selectedFolderIds.includes(folder.id)}
+                        onChange={() => toggleFolderSelection(folder.id)}
+                      />
+                    )}
+                    <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-110 transition flex-shrink-0">
+                      <Folder className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="font-semibold text-sm text-white group-hover:text-amber-300 transition truncate">{folder.name}</h4>
+                      <p className="text-[11px] text-slate-400">
+                        Folder • {new Date(folder.createdAt).toLocaleDateString('id-ID')}
+                      </p>
+                    </div>
                   </div>
-                  <span className="truncate max-w-xs group-hover:text-amber-300 transition">{folder.name}</span>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  {folder.shares && folder.shares.length > 0 ? (
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-mono border ${folder.shares[0].isActive
-                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                      : 'bg-red-500/10 text-red-400 border-red-500/20'
-                      }`}>
+                  {folder.shares && folder.shares.length > 0 && (
+                    <span
+                      className={`px-2 py-0.5 rounded text-[10px] font-mono border flex-shrink-0 ${folder.shares[0].isActive
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        : 'bg-red-500/10 text-red-400 border-red-500/20'
+                        }`}
+                    >
                       {folder.shares[0].isActive ? `Aktif: ${folder.shares[0].uniqueCode}` : `Nonaktif (${folder.shares[0].uniqueCode})`}
                     </span>
-                  ) : (
-                    <span className="text-slate-500 text-xs text-center">-</span>
                   )}
-                </td>
-                <td className="px-6 py-4 text-slate-400 text-center">-</td>
-                <td className="px-6 py-4 text-slate-400 text-center">
-                  {new Date(folder.createdAt).toLocaleDateString('id-ID')}
-                </td>
-                <td className="px-6 py-4 text-center space-x-2" onClick={(e) => e.stopPropagation()}>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-800/40" onClick={(e) => e.stopPropagation()}>
                   {onDownloadFolder && (
                     <button
                       disabled={isSelectionMode}
                       onClick={() => onDownloadFolder(folder.id, folder.name)}
-                      className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                      title="Unduh Folder (ZIP)"
+                      className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                     >
                       <Download className="w-3.5 h-3.5" />
+                      <span>Unduh</span>
                     </button>
                   )}
                   {onGenerateFolderShareCode && (
                     <button
                       disabled={isSelectionMode}
                       onClick={() => onGenerateFolderShareCode(folder.id, folder.name, folder.shares)}
-                      className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                      title="Manajemen Akses Kode"
+                      className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                     >
                       <Share2 className="w-3.5 h-3.5" />
+                      <span>Bagikan</span>
                     </button>
                   )}
                   {onRenameFolder && (
                     <button
                       disabled={isSelectionMode}
                       onClick={() => onRenameFolder(folder.id, folder.name)}
-                      className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                      title="Ubah Nama Folder"
+                      className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
+                      <span>Ubah Nama</span>
                     </button>
                   )}
                   {onDeleteFolder && (
                     <button
                       disabled={isSelectionMode}
                       onClick={() => onDeleteFolder(folder.id, folder.name)}
-                      className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                      title="Hapus Folder"
+                      className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
+                      <span>Hapus</span>
                     </button>
                   )}
-                </td>
-              </tr>
+                </div>
+              </div>
             ))}
+
+            {/* Files Mobile Cards */}
             {files.map((file) => {
               const { Icon, colorClass, textHoverClass } = getFileCategoryStyle(file.category);
 
               return (
-                <tr
+                <div
                   key={file.id}
                   onClick={() => {
-                    if (isSelectionMode) toggleFileSelection(file.id);
+                    if (isSelectionMode) {
+                      toggleFileSelection(file.id);
+                    } else if (onPreviewFile) {
+                      onPreviewFile(file);
+                    }
                   }}
-                  className={`transition ${selectedFileIds.includes(file.id) ? 'bg-indigo-950/30' : 'hover:bg-slate-900/40'
-                    } ${isSelectionMode ? 'cursor-pointer' : ''}`}
+                  className={`p-4 transition space-y-3 cursor-pointer ${selectedFileIds.includes(file.id) ? 'bg-indigo-950/20 border-l-4 border-indigo-500' : 'hover:bg-slate-900/40'
+                    }`}
                 >
-                  {isSelectionMode && (
-                    <td className="px-4 py-4 text-center" onClick={(e) => e.stopPropagation()}>
-                      <CustomCheckbox
-                        checked={selectedFileIds.includes(file.id)}
-                        onChange={() => toggleFileSelection(file.id)}
-                      />
-                    </td>
-                  )}
-                  <td className="px-6 py-4 font-semibold text-white flex items-center gap-3">
-                    <div className={`p-1.5 rounded-lg border flex-shrink-0 ${colorClass}`}>
-                      <Icon className="w-4 h-4" />
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {isSelectionMode && (
+                        <CustomCheckbox
+                          checked={selectedFileIds.includes(file.id)}
+                          onChange={() => toggleFileSelection(file.id)}
+                        />
+                      )}
+                      <div className={`p-2 rounded-xl border flex-shrink-0 ${colorClass}`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className={`font-semibold text-sm text-white truncate max-w-[180px] transition ${textHoverClass}`}>
+                          {file.fileName}
+                        </h4>
+                        <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
+                          <span>{formatBytes(Number(file.fileSize))}</span>
+                          <span>•</span>
+                          <span>{new Date(file.createdAt).toLocaleDateString('id-ID')}</span>
+                        </div>
+                      </div>
                     </div>
-                    <span className={`truncate max-w-xs transition ${textHoverClass}`}>{file.fileName}</span>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    {file.shares && file.shares.length > 0 ? (
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono border ${file.shares[0].isActive
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        : 'bg-red-500/10 text-red-400 border-red-500/20'
-                        }`}>
+
+                    {file.shares && file.shares.length > 0 && (
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono border flex-shrink-0 ${file.shares[0].isActive
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : 'bg-red-500/10 text-red-400 border-red-500/20'
+                          }`}
+                      >
                         {file.shares[0].isActive ? `Aktif: ${file.shares[0].uniqueCode}` : `Nonaktif (${file.shares[0].uniqueCode})`}
                       </span>
-                    ) : (
-                      <span className="text-slate-500 text-xs text-center">-</span>
                     )}
-                  </td>
-                  <td className="px-6 py-4 text-slate-400 text-center">{formatBytes(Number(file.fileSize))}</td>
-                  <td className="px-6 py-4 text-slate-400 text-center">
-                    {new Date(file.createdAt).toLocaleDateString('id-ID')}
-                  </td>
-                  <td className="px-6 py-4 text-center space-x-2">
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-800/40 flex-wrap" onClick={(e) => e.stopPropagation()}>
+
                     <button
                       disabled={isSelectionMode}
                       onClick={() => onDownloadPrivate(file.id, file.fileName)}
-                      className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                      title="Unduh"
+                      className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                     >
                       <Download className="w-3.5 h-3.5" />
+                      <span>Unduh</span>
                     </button>
                     <button
                       disabled={isSelectionMode}
                       onClick={() => onGenerateShareCode(file.id, file.fileName, file.shares)}
-                      className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                      title="Manajemen Akses Kode"
+                      className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                     >
                       <Share2 className="w-3.5 h-3.5" />
+                      <span>Bagikan</span>
                     </button>
                     {onRenameFile && (
                       <button
                         disabled={isSelectionMode}
                         onClick={() => onRenameFile(file.id, file.fileName)}
-                        className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                        title="Rename"
+                        className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
+                        <span>Ubah Nama</span>
                       </button>
                     )}
                     {onDeleteFile && (
                       <button
                         disabled={isSelectionMode}
                         onClick={() => onDeleteFile(file.id, file.fileName)}
-                        className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                        title="Hapus"
+                        className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
+                        <span>Hapus</span>
                       </button>
                     )}
-                  </td>
-                </tr>
+                  </div>
+                </div>
               );
             })}
-          </tbody>
-        </table>
+          </div>
+
+          {/* Desktop View: Table Layout (screens >= 768px) */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left text-sm text-slate-300">
+              <thead className="bg-slate-900/80 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
+                <tr>
+                  {isSelectionMode && (
+                    <th className="px-4 py-4 w-12 text-center">
+                      <CustomCheckbox
+                        checked={isAllSelected}
+                        onChange={toggleSelectAll}
+                        title="Pilih Semua Item"
+                      />
+                    </th>
+                  )}
+                  <th className="px-6 py-4 text-center">Nama File / Folder</th>
+                  <th className="px-6 py-4 text-center">Status Share</th>
+                  <th className="px-6 py-4 text-center">Ukuran</th>
+                  <th className="px-6 py-4 text-center">Tanggal Unggah</th>
+                  <th className="px-6 py-4 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {folders.map((folder) => (
+                  <tr
+                    key={folder.id}
+                    onClick={() => {
+                      if (isSelectionMode) {
+                        toggleFolderSelection(folder.id);
+                      } else {
+                        onFolderClick(folder.id, folder.name);
+                      }
+                    }}
+                    className={`transition cursor-pointer group ${selectedFolderIds.includes(folder.id) ? 'bg-amber-950/20' : 'hover:bg-slate-900/60'
+                      }`}
+                  >
+                    {isSelectionMode && (
+                      <td className="px-4 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                        <CustomCheckbox
+                          checked={selectedFolderIds.includes(folder.id)}
+                          onChange={() => toggleFolderSelection(folder.id)}
+                        />
+                      </td>
+                    )}
+                    <td className="px-6 py-4 font-semibold text-white flex items-center gap-3">
+                      <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-110 transition flex-shrink-0">
+                        <Folder className="w-4 h-4" />
+                      </div>
+                      <span className="truncate max-w-xs group-hover:text-amber-300 transition">{folder.name}</span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {folder.shares && folder.shares.length > 0 ? (
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-mono border ${folder.shares[0].isActive
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : 'bg-red-500/10 text-red-400 border-red-500/20'
+                          }`}>
+                          {folder.shares[0].isActive ? `Aktif: ${folder.shares[0].uniqueCode}` : `Nonaktif (${folder.shares[0].uniqueCode})`}
+                        </span>
+                      ) : (
+                        <span className="text-slate-500 text-xs text-center">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-slate-400 text-center">-</td>
+                    <td className="px-6 py-4 text-slate-400 text-center">
+                      {new Date(folder.createdAt).toLocaleDateString('id-ID')}
+                    </td>
+                    <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                      <div className="inline-flex items-center justify-center gap-2">
+                        {onDownloadFolder && (
+                          <button
+                            disabled={isSelectionMode}
+                            onClick={() => onDownloadFolder(folder.id, folder.name)}
+                            className="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition inline-flex items-center justify-center cursor-pointer shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
+                            title="Unduh Folder (ZIP)"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                        )}
+                        {onGenerateFolderShareCode && (
+                          <button
+                            disabled={isSelectionMode}
+                            onClick={() => onGenerateFolderShareCode(folder.id, folder.name, folder.shares)}
+                            className="px-2.5 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 transition inline-flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                            title="Manajemen Akses Kode"
+                          >
+                            <Share2 className="w-4 h-4" />
+                          </button>
+                        )}
+                        {onRenameFolder && (
+                          <button
+                            disabled={isSelectionMode}
+                            onClick={() => onRenameFolder(folder.id, folder.name)}
+                            className="px-2.5 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 transition inline-flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                            title="Ubah Nama Folder"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                        )}
+                        {onDeleteFolder && (
+                          <button
+                            disabled={isSelectionMode}
+                            onClick={() => onDeleteFolder(folder.id, folder.name)}
+                            className="px-2.5 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 transition inline-flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                            title="Hapus Folder"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {files.map((file) => {
+                  const { Icon, colorClass, textHoverClass } = getFileCategoryStyle(file.category);
+
+                  return (
+                    <tr
+                      key={file.id}
+                      onClick={() => {
+                        if (isSelectionMode) {
+                          toggleFileSelection(file.id);
+                        } else if (onPreviewFile) {
+                          onPreviewFile(file);
+                        }
+                      }}
+                      className={`transition cursor-pointer ${selectedFileIds.includes(file.id) ? 'bg-indigo-950/30' : 'hover:bg-slate-900/40'
+                        }`}
+                    >
+                      {isSelectionMode && (
+                        <td className="px-4 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                          <CustomCheckbox
+                            checked={selectedFileIds.includes(file.id)}
+                            onChange={() => toggleFileSelection(file.id)}
+                          />
+                        </td>
+                      )}
+                      <td className="px-6 py-4 font-semibold text-white flex items-center gap-3">
+                        <div className={`p-1.5 rounded-lg border flex-shrink-0 ${colorClass}`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <span className={`truncate max-w-xs transition ${textHoverClass}`}>{file.fileName}</span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {file.shares && file.shares.length > 0 ? (
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-mono border ${file.shares[0].isActive
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : 'bg-red-500/10 text-red-400 border-red-500/20'
+                            }`}>
+                            {file.shares[0].isActive ? `Aktif: ${file.shares[0].uniqueCode}` : `Nonaktif (${file.shares[0].uniqueCode})`}
+                          </span>
+                        ) : (
+                          <span className="text-slate-500 text-xs text-center">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-slate-400 text-center">{formatBytes(Number(file.fileSize))}</td>
+                      <td className="px-6 py-4 text-slate-400 text-center">
+                        {new Date(file.createdAt).toLocaleDateString('id-ID')}
+                      </td>
+                      <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                        <div className="inline-flex items-center justify-center gap-2">
+
+                          <button
+                            disabled={isSelectionMode}
+                            onClick={() => onDownloadPrivate(file.id, file.fileName)}
+                            className="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition inline-flex items-center justify-center cursor-pointer shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
+                            title="Unduh"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                          <button
+                            disabled={isSelectionMode}
+                            onClick={() => onGenerateShareCode(file.id, file.fileName, file.shares)}
+                            className="px-2.5 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 transition inline-flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                            title="Manajemen Akses Kode"
+                          >
+                            <Share2 className="w-4 h-4" />
+                          </button>
+                          {onRenameFile && (
+                            <button
+                              disabled={isSelectionMode}
+                              onClick={() => onRenameFile(file.id, file.fileName)}
+                              className="px-2.5 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 transition inline-flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                              title="Rename"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                          )}
+                          {onDeleteFile && (
+                            <button
+                              disabled={isSelectionMode}
+                              onClick={() => onDeleteFile(file.id, file.fileName)}
+                              className="px-2.5 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 transition inline-flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                              title="Hapus"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/* Infinite Scroll Indicator & Observer Sentinel */}
+      <div ref={observerTargetRef} className="py-6 flex flex-col items-center justify-center space-y-2">
+        {loadingMore && (
+          <div className="flex items-center space-x-2 text-indigo-400 text-xs font-medium bg-slate-900/80 px-4 py-2 rounded-full border border-indigo-500/30 shadow-md">
+            <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+            <span>Memuat 20 file berikutnya...</span>
+          </div>
+        )}
+        {!hasMore && files.length > 0 && (
+          <p className="text-[11px] text-slate-500 font-medium">
+            Semua {files.length} file telah ditampilkan.
+          </p>
+        )}
       </div>
     </div>
   );
