@@ -91,40 +91,40 @@ export const Login: React.FC = () => {
       <Header />
 
       {/* Hero Content */}
-      <main className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-        <div className="lg:col-span-7 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-xs font-semibold uppercase tracking-wider">
-            <Sparkles className="w-4 h-4" /> Multi-Drive SaaS Private Storage
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-16 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+        <div className="lg:col-span-7 space-y-5 sm:space-y-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-[11px] sm:text-xs font-semibold uppercase tracking-wider">
+            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Multi-Drive SaaS Private Storage
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-tight">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
             Penyimpanan File Privat Kuota <span className="gradient-text">10 GB Gratis</span>
           </h1>
 
-          <p className="text-slate-400 text-lg leading-relaxed max-w-2xl">
+          <p className="text-slate-400 text-base sm:text-lg leading-relaxed max-w-2xl">
             Solusi SaaS terpadu penggabungan akun Google Drive dengan tingkat keamanan tinggi. Batas kuota 10 GB per penggunanya selama 30 hari pertama, pembagian file via kode unik acak, dan pencatatan log akses yang transparan.
           </p>
 
           {/* Slot Capacity Live Meter */}
-          <div className="p-6 rounded-2xl glass-card border border-slate-800/80 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-slate-300 font-semibold">
-                <Users className="w-5 h-5 text-indigo-400" />
+          <div className="p-4 sm:p-6 rounded-2xl glass-card border border-slate-800/80 shadow-2xl space-y-3.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-slate-300 text-xs sm:text-sm font-semibold">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400 flex-shrink-0" />
                 <span>Status Slot Pengguna Gratis (Maks {slotInfo?.totalSlots || 100} User)</span>
               </div>
-              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${slotInfo?.isFull ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
+              <span className={`self-start sm:self-auto text-[11px] sm:text-xs font-bold px-2.5 py-0.5 sm:py-1 rounded-full ${slotInfo?.isFull ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
                 {slotInfo?.isFull ? 'Tutup / Penuh' : 'Slot Tersedia'}
               </span>
             </div>
 
-            <div className="w-full bg-slate-900 h-3 rounded-full overflow-hidden border border-slate-800 relative">
+            <div className="w-full bg-slate-900 h-2.5 sm:h-3 rounded-full overflow-hidden border border-slate-800 relative">
               <div
                 className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-full transition-all duration-1000 ease-out"
                 style={{ width: `${Math.min(100, ((slotInfo?.usedSlots || 0) / (slotInfo?.totalSlots || 100)) * 100)}%` }}
               ></div>
             </div>
 
-            <div className="flex justify-between text-xs text-slate-400 font-medium">
+            <div className="flex justify-between text-[11px] sm:text-xs text-slate-400 font-medium">
               <span>Terpakai: <strong className="text-slate-200">{slotInfo?.usedSlots ?? '...'}</strong> user</span>
               <span>Sisa Slot: <strong className="text-indigo-400">{slotInfo?.remainingSlots ?? '...'}</strong> slot gratis</span>
             </div>

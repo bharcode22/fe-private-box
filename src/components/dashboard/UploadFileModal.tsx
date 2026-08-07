@@ -30,7 +30,7 @@ export const UploadFileModal: React.FC<UploadFileModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-lg rounded-3xl glass-card border border-slate-800 p-6 space-y-6 shadow-2xl">
+      <div className="relative w-full max-w-lg rounded-3xl glass-card border border-slate-800 p-5 sm:p-6 space-y-5 sm:space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
           disabled={uploading}

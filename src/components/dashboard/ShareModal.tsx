@@ -60,7 +60,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full glass-card p-6 rounded-2xl border border-slate-800 space-y-5 relative shadow-2xl">
+      <div className="max-w-md w-full glass-card p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-4 sm:space-y-5 relative shadow-2xl max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
           disabled={saving}

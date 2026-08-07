@@ -110,13 +110,13 @@ export const AccessFile: React.FC = () => {
       <Navbar showShareButton={false} />
 
       {/* Download Form */}
-      <main className="max-w-md w-full mx-auto px-6 py-12 flex-1 flex flex-col justify-center">
-        <div className="glass-card p-8 rounded-3xl border border-slate-800 shadow-2xl space-y-6">
+      <main className="max-w-md w-full mx-auto px-4 sm:px-6 py-6 sm:py-12 flex-1 flex flex-col justify-center">
+        <div className="glass-card p-5 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl space-y-5 sm:space-y-6">
           <div className="text-center space-y-2">
             <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 mx-auto">
               <Lock className="w-6 h-6" />
             </div>
-            <h1 className="text-2xl font-extrabold text-white">Unduh File / Folder Terproteksi</h1>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white">Unduh File / Folder Terproteksi</h1>
             <p className="text-xs text-slate-400">Masukkan kode unik dan email Anda untuk mengunduh file atau folder (ZIP) yang dibagikan.</p>
           </div>
 

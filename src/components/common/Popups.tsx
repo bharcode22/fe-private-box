@@ -85,7 +85,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full glass-card p-6 rounded-3xl border border-slate-800 space-y-5 relative shadow-2xl animate-in zoom-in-95 duration-200">
+      <div className="max-w-md w-full glass-card p-5 sm:p-6 rounded-3xl border border-slate-800 space-y-4 sm:space-y-5 relative shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
         <div className="flex items-start gap-4">
           <div
             className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${isDanger
@@ -162,7 +162,7 @@ export const PromptModal: React.FC<PromptModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full glass-card p-6 rounded-3xl border border-slate-800 space-y-5 relative shadow-2xl animate-in zoom-in-95 duration-200">
+      <div className="max-w-md w-full glass-card p-5 sm:p-6 rounded-3xl border border-slate-800 space-y-4 sm:space-y-5 relative shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
             <Edit3 className="w-5 h-5" />

@@ -67,28 +67,29 @@ export const Account: React.FC = () => {
       <Navbar user={user} onLogout={handleLogout} />
 
       {/* Main Account Content */}
-      <main className="max-w-5xl w-full mx-auto px-6 py-10 flex-1 space-y-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <main className="max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 flex-1 space-y-6 sm:space-y-8">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0">
             <Link
               to="/dashboard"
-              className="p-2.5 rounded-xl border border-slate-800 hover:border-slate-700 hover:bg-slate-900 text-slate-400 hover:text-white transition"
+              className="p-2 sm:p-2.5 rounded-xl border border-slate-800 hover:border-slate-700 hover:bg-slate-900 text-slate-400 hover:text-white transition flex-shrink-0"
               title="Kembali ke Dashboard"
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div>
-              <h1 className="text-2xl font-extrabold text-white flex items-center gap-2">
-                <User className="w-6 h-6 text-indigo-400" /> Informasi & Status Akun
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2 truncate">
+                <User className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-400 flex-shrink-0" />
+                <span className="truncate">Informasi & Status Akun</span>
               </h1>
-              <p className="text-xs text-slate-400">Detail lisensi, kuota penyimpanan, dan masa aktif akun Anda.</p>
+              <p className="text-[11px] sm:text-xs text-slate-400 truncate">Detail lisensi, kuota penyimpanan, dan masa aktif akun Anda.</p>
             </div>
           </div>
 
           <button
             onClick={() => fetchAccountData(true)}
             disabled={isRefreshing}
-            className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition flex items-center gap-1.5 border border-slate-700/80 cursor-pointer disabled:opacity-50"
+            className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition flex items-center gap-1.5 border border-slate-700/80 cursor-pointer disabled:opacity-50 flex-shrink-0 active:scale-95"
             title="Muat Ulang Informasi Akun"
           >
             <RotateCw className={`w-4 h-4 text-indigo-400 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -97,21 +98,21 @@ export const Account: React.FC = () => {
         </div>
 
         {/* User Profile Card */}
-        <div className="p-6 rounded-3xl glass-card border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xl font-extrabold shadow-lg shadow-indigo-500/20">
+        <div className="p-4 sm:p-6 rounded-3xl glass-card border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+          <div className="flex items-center gap-3.5 sm:gap-4">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white text-lg sm:text-xl font-extrabold shadow-lg shadow-indigo-500/20 flex-shrink-0">
               {user?.name?.charAt(0)?.toUpperCase() || 'U'}
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                {user?.name || 'Pengguna Private Box'}
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2 truncate">
+                <span className="truncate">{user?.name || 'Pengguna Private Box'}</span>
+                <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
               </h2>
-              <p className="text-xs text-slate-400">{user?.email || '-'}</p>
+              <p className="text-xs text-slate-400 truncate">{user?.email || '-'}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-800/80 text-xs">
+          <div className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 bg-slate-900/80 px-3.5 py-2 rounded-xl border border-slate-800/80 text-xs">
             <span className="text-slate-400">Tipe Lisensi:</span>
             <span className="font-bold text-indigo-400">Free Tier (10 GB / 30 Hari)</span>
           </div>
