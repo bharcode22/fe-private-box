@@ -8,6 +8,8 @@ interface NavbarProps {
   showShareButton?: boolean;
   uploading?: boolean;
   uploadProgress?: number;
+  deleting?: boolean;
+  deleteProgress?: number;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -16,6 +18,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   showShareButton = true,
   uploading = false,
   uploadProgress = 0,
+  deleting = false,
+  deleteProgress = 0,
 }) => {
   const location = useLocation();
   const currentPathWithSearch = location.pathname + location.search;
@@ -24,15 +28,24 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 relative overflow-hidden">
-      {/* Top Global Progress Bar (YouTube/GitHub Style) */}
-      {uploading && (
+      {/* Top Global Progress Bar (YouTube/GitHub Style for Upload / Delete) */}
+      {(uploading || deleting) && (
         <div className="absolute top-0 left-0 right-0 h-1 bg-slate-900 overflow-hidden z-50">
-          {uploadProgress >= 100 ? (
-            <div className="w-full h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 animate-pulse shadow-[0_0_12px_rgba(168,85,247,0.9)]" />
+          {uploading ? (
+            uploadProgress >= 100 ? (
+              <div className="w-full h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 animate-pulse shadow-[0_0_12px_rgba(168,85,247,0.9)]" />
+            ) : (
+              <div
+                className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-300 shadow-[0_0_12px_rgba(99,102,241,0.9)]"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            )
+          ) : deleteProgress >= 100 ? (
+            <div className="w-full h-full bg-gradient-to-r from-red-500 via-rose-500 to-amber-500 animate-pulse shadow-[0_0_12px_rgba(244,63,94,0.9)]" />
           ) : (
             <div
-              className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-300 shadow-[0_0_12px_rgba(99,102,241,0.9)]"
-              style={{ width: `${uploadProgress}%` }}
+              className="h-full bg-gradient-to-r from-red-500 via-rose-500 to-amber-500 transition-all duration-300 shadow-[0_0_12px_rgba(239,68,68,0.9)]"
+              style={{ width: `${deleteProgress}%` }}
             />
           )}
         </div>

@@ -5,6 +5,7 @@ import api from '../services/api';
 import { Navbar } from '../components/layout/Navbar';
 import { UploadFileModal } from '../components/dashboard/UploadFileModal';
 import { BackgroundUploadWidget } from '../components/dashboard/BackgroundUploadWidget';
+import { BackgroundDeleteWidget } from '../components/dashboard/BackgroundDeleteWidget';
 import { TableSkeleton } from '../components/common/SkeletonLoader';
 import { FileListTable, FileItem, FolderItem } from '../components/dashboard/FileListTable';
 import { CreateFolderModal } from '../components/dashboard/FolderModals';
@@ -13,6 +14,9 @@ import { ShareModal } from '../components/dashboard/ShareModal';
 import { ToastContainer, ConfirmModal, PromptModal, ToastMessage } from '../components/common/Popups';
 import { formatBytes } from '../utils/formatters';
 import { getDaysRemaining } from '../utils/dateUtils';
+import { downloadService } from '../services/downloadService';
+import { shareService } from '../services/shareService';
+import { useFileUpload } from '../hooks/useFileUpload';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -33,44 +37,80 @@ export const Dashboard: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [actualProgress, setActualProgress] = useState(0);
-  const [uploadFileCount, setUploadFileCount] = useState(0);
-  const [uploadTargetFolderName, setUploadTargetFolderName] = useState('Root');
-  const [currentFileIndex, setCurrentFileIndex] = useState<number>(0);
-  const [currentFileName, setCurrentFileName] = useState<string>('');
-  const [fileProgressPercent, setFileProgressPercent] = useState<number>(0);
-  const [statusMessage, setStatusMessage] = useState<string>('');
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const sseRef = useRef<EventSource | null>(null);
+
+  // Custom Upload Hook encapsulation
+  const {
+    selectedFiles,
+    setSelectedFiles,
+    uploading,
+    uploadProgress,
+    uploadFileCount,
+    uploadTargetFolderName,
+    currentFileIndex,
+    currentFileName,
+    fileProgressPercent,
+    statusMessage,
+    handleFileUpload: uploadHandler,
+    handleCancelUpload: cancelUploadHandler,
+  } = useFileUpload();
+
+  // Live Delete Progress Loading State
+  const [deleting, setDeleting] = useState(false);
+  const [deleteProgress, setDeleteProgress] = useState(0);
+  const [deleteItemCount, setDeleteItemCount] = useState(0);
+  const [deleteCurrentIndex, setDeleteCurrentIndex] = useState(0);
+  const [deleteCurrentName, setDeleteCurrentName] = useState('');
+  const [deleteStatusMessage, setDeleteStatusMessage] = useState('');
 
   useEffect(() => {
-    if (!uploading) {
-      setUploadProgress(0);
-      setActualProgress(0);
-      setCurrentFileIndex(0);
-      setCurrentFileName('');
-      setFileProgressPercent(0);
-      setStatusMessage('');
+    if (!deleting) {
+      setDeleteProgress(0);
+      setDeleteItemCount(0);
+      setDeleteCurrentIndex(0);
+      setDeleteCurrentName('');
+      setDeleteStatusMessage('');
       return;
     }
 
     const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (actualProgress > prev) {
-          const diff = actualProgress - prev;
-          const step = Math.max(1, Math.ceil(diff / 3));
-          return Math.min(99, prev + step);
-        }
+      setDeleteProgress((prev) => {
+        if (prev < 90) return prev + 10;
+        if (prev < 98) return prev + 2;
         return prev;
       });
-    }, 50);
+    }, 120);
 
     return () => clearInterval(interval);
-  }, [uploading, actualProgress]);
+  }, [deleting]);
 
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const executeDeleteWithProgress = async (
+    count: number,
+    name: string,
+    deleteFn: () => Promise<any>,
+    defaultSuccessMsg: string
+  ) => {
+    setDeleting(true);
+    setDeleteProgress(15);
+    setDeleteItemCount(count);
+    setDeleteCurrentIndex(1);
+    setDeleteCurrentName(name);
+    setDeleteStatusMessage(`Menghapus "${name}" dari storage...`);
+
+    try {
+      const res = await deleteFn();
+      setDeleteProgress(100);
+      setDeleteStatusMessage('Penghapusan berhasil! Memperbarui data...');
+      showToast(res?.data?.message || defaultSuccessMsg, 'success');
+      await fetchDashboardData();
+    } catch (err: any) {
+      showToast(err.response?.data?.error || 'Gagal menghapus item', 'error');
+    } finally {
+      setTimeout(() => {
+        setDeleting(false);
+      }, 800);
+    }
+  };
+
   const [shareModal, setShareModal] = useState<{ id: string; name: string; type: 'file' | 'folder'; code?: string; isActive?: boolean } | null>(null);
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -86,6 +126,7 @@ export const Dashboard: React.FC = () => {
   }, [currentFolderId]);
 
   const navigateToFolder = (folderId: string | null) => {
+    setLoading(true);
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
@@ -201,6 +242,7 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     if (user) {
+      setLoading(true);
       fetchDashboardData();
     }
   }, [user, currentFolderId]);
@@ -212,185 +254,38 @@ export const Dashboard: React.FC = () => {
   };
 
   const handleCancelUpload = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
-    if (sseRef.current) {
-      sseRef.current.close();
-      sseRef.current = null;
-    }
-    setUploading(false);
-    setUploadProgress(0);
-    setActualProgress(0);
-    setCurrentFileIndex(0);
-    setCurrentFileName('');
-    setStatusMessage('');
-    setSelectedFiles(null);
-    showToast('Unggahan file dibatalkan.', 'info');
+    cancelUploadHandler(showToast);
   };
 
-  const handleFileUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedFiles || selectedFiles.length === 0) return;
-
-    const count = selectedFiles.length;
-    setUploadFileCount(count);
-    setUploadTargetFolderName(currentFolder?.name || 'Root');
-
-    const formData = new FormData();
-    for (let i = 0; i < count; i++) {
-      formData.append('files', selectedFiles[i]);
-      const relPath = (selectedFiles[i] as any).webkitRelativePath || selectedFiles[i].name;
-      formData.append('relativePaths', relPath);
-    }
-    if (currentFolder) {
-      formData.append('folderId', currentFolder.id);
-    }
-
-    // Immediately close modal so user can work in background
-    setIsUploadModalOpen(false);
-
-    setUploading(true);
-    setUploadProgress(0);
-    setActualProgress(0);
-    setCurrentFileIndex(1);
-    setCurrentFileName(selectedFiles[0]?.name || '');
-    setStatusMessage('Memulai koneksi ke server...');
-
-    const uploadJobId = 'job-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
-    formData.append('jobId', uploadJobId);
-
-    const token = localStorage.getItem('pb_token');
-    const apiBaseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
-    const sseUrl = `${apiBaseUrl}/api/files/upload-progress/${uploadJobId}?token=${token}`;
-
-    try {
-      const eventSource = new EventSource(sseUrl);
-      sseRef.current = eventSource;
-
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.currentFileIndex) setCurrentFileIndex(data.currentFileIndex);
-          if (data.currentFileName) setCurrentFileName(data.currentFileName);
-          if (data.statusMessage) setStatusMessage(data.statusMessage);
-          if (typeof data.progressPercent === 'number') setActualProgress(data.progressPercent);
-          if (typeof data.fileProgressPercent === 'number') setFileProgressPercent(data.fileProgressPercent);
-        } catch (e) { }
-      };
-    } catch (e) {
-      console.warn('SSE progress connection error:', e);
-    }
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
-    try {
-      await api.post(`/api/files/upload?uploadJobId=${uploadJobId}`, formData, {
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setActualProgress(percentCompleted);
-          }
-        }
-      });
-
-      // Complete to 100% smoothly and hold for 450ms
-      setUploadProgress(100);
-      await new Promise((r) => setTimeout(r, 450));
-
-      setSelectedFiles(null);
-      fetchDashboardData();
-      showToast(`${count} File berhasil diunggah!`, 'success');
-    } catch (err: any) {
-      if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
-        return;
-      }
-      showToast(err.response?.data?.error || 'Gagal mengunggah file', 'error');
-    } finally {
-      if (sseRef.current) {
-        sseRef.current.close();
-        sseRef.current = null;
-      }
-      setUploading(false);
-      setUploadProgress(0);
-      setActualProgress(0);
-      setCurrentFileIndex(0);
-      setCurrentFileName('');
-      setStatusMessage('');
-      abortControllerRef.current = null;
-    }
+  const handleFileUpload = (e: React.FormEvent) => {
+    uploadHandler(e, currentFolder, fetchDashboardData, showToast, () => setIsUploadModalOpen(false));
   };
 
   const handleGenerateShareCode = async (fileId: string, fileName: string, fileShares?: any[]) => {
-    const existingShare = fileShares && fileShares.length > 0 ? fileShares[0] : null;
-    if (existingShare) {
-      setShareModal({
-        id: fileId,
-        name: fileName,
-        type: 'file',
-        code: existingShare.uniqueCode,
-        isActive: existingShare.isActive,
-      });
-    } else {
-      try {
-        const res = await api.post(`/api/files/${fileId}/share`);
-        setShareModal({
-          id: fileId,
-          name: fileName,
-          type: 'file',
-          code: res.data.uniqueCode,
-          isActive: res.data.isActive !== false,
-        });
-        fetchDashboardData();
-      } catch (err: any) {
-        showToast(err.response?.data?.error || 'Gagal membuat kode unik pembagian file', 'error');
-      }
+    try {
+      const data = await shareService.getOrCreateShareCode('file', fileId, fileName, fileShares);
+      setShareModal(data);
+      if (!fileShares || fileShares.length === 0) fetchDashboardData();
+    } catch (err: any) {
+      showToast(err.response?.data?.error || 'Gagal membuat kode unik pembagian file', 'error');
     }
   };
 
   const handleGenerateFolderShareCode = async (folderId: string, folderName: string, folderShares?: any[]) => {
-    const existingShare = folderShares && folderShares.length > 0 ? folderShares[0] : null;
-    if (existingShare) {
-      setShareModal({
-        id: folderId,
-        name: folderName,
-        type: 'folder',
-        code: existingShare.uniqueCode,
-        isActive: existingShare.isActive,
-      });
-    } else {
-      try {
-        const res = await api.post(`/api/folders/${folderId}/share`);
-        setShareModal({
-          id: folderId,
-          name: folderName,
-          type: 'folder',
-          code: res.data.uniqueCode,
-          isActive: res.data.isActive !== false,
-        });
-        fetchDashboardData();
-      } catch (err: any) {
-        showToast(err.response?.data?.error || 'Gagal membuat kode unik pembagian folder', 'error');
-      }
+    try {
+      const data = await shareService.getOrCreateShareCode('folder', folderId, folderName, folderShares);
+      setShareModal(data);
+      if (!folderShares || folderShares.length === 0) fetchDashboardData();
+    } catch (err: any) {
+      showToast(err.response?.data?.error || 'Gagal membuat kode unik pembagian folder', 'error');
     }
   };
 
   const handleUpdateShare = async (id: string, options: { customCode?: string; isActive?: boolean }) => {
+    if (!shareModal) return;
     try {
-      const isFolder = shareModal?.type === 'folder';
-      const endpoint = isFolder ? `/api/folders/${id}/share` : `/api/files/${id}/share`;
-      const res = await api.put(endpoint, options);
-      setShareModal(prev => prev ? {
-        ...prev,
-        code: res.data.uniqueCode,
-        isActive: res.data.isActive,
-      } : null);
+      const result = await shareService.updateShareCode(shareModal.type, id, options);
+      setShareModal((prev) => (prev ? { ...prev, ...result } : null));
       fetchDashboardData();
       showToast('Manajemen akses berhasil diperbarui!', 'success');
     } catch (err: any) {
@@ -399,15 +294,10 @@ export const Dashboard: React.FC = () => {
   };
 
   const handleRandomizeCode = async (id: string) => {
+    if (!shareModal) return;
     try {
-      const isFolder = shareModal?.type === 'folder';
-      const endpoint = isFolder ? `/api/folders/${id}/share` : `/api/files/${id}/share`;
-      const res = await api.post(endpoint);
-      setShareModal(prev => prev ? {
-        ...prev,
-        code: res.data.uniqueCode,
-        isActive: res.data.isActive,
-      } : null);
+      const result = await shareService.randomizeShareCode(shareModal.type, id);
+      setShareModal((prev) => (prev ? { ...prev, ...result } : null));
       fetchDashboardData();
       showToast('Kode baru berhasil diacak!', 'info');
     } catch (err: any) {
@@ -415,64 +305,54 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const handleDownloadPrivate = async (fileId: string, fileName: string) => {
-    try {
-      const res = await api.get(`/api/files/${fileId}/download`, {
-        responseType: 'blob',
-      });
-
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', fileName);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      showToast(`Mengunduh "${fileName}"...`, 'info');
-    } catch (err) {
-      showToast('Gagal mengunduh file', 'error');
-    }
+  const handleDownloadPrivate = (fileId: string, fileName: string) => {
+    downloadService.downloadFile(fileId, fileName, showToast);
   };
 
-  const handleDownloadFolder = async (folderId: string, folderName: string) => {
-    try {
-      showToast(`Mempersiapkan unduhan folder "${folderName}"...`, 'info');
-      const res = await api.get(`/api/folders/${folderId}/download`, {
-        responseType: 'blob',
-      });
-
-      const zipFileName = `${folderName}.zip`;
-      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/zip' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', zipFileName);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      showToast(`Berhasil mengunduh folder "${zipFileName}"!`, 'success');
-    } catch (err: any) {
-      if (err.response && err.response.data instanceof Blob) {
-        const text = await err.response.data.text();
-        try {
-          const json = JSON.parse(text);
-          showToast(json.error || 'Gagal mengunduh folder', 'error');
-          return;
-        } catch (e) { }
-      }
-      showToast('Gagal mengunduh folder atau folder masih kosong', 'error');
-    }
+  const handleDownloadFolder = (folderId: string, folderName: string) => {
+    downloadService.downloadFolder(folderId, folderName, showToast);
   };
-
 
   const usedBytes = Number(userInfo?.storageUsed || 0);
   const limitBytes = Number(userInfo?.storageLimit || import.meta.env.VITE_FREE_USER_QUOTA_BYTES || 10737418240);
   const quotaPercent = Math.min(100, (usedBytes / limitBytes) * 100);
   const daysLeft = getDaysRemaining(userInfo?.expiresAt);
 
+  const handleBatchDelete = (selectedFileIds: string[], selectedFolderIds: string[]) => {
+    const total = selectedFileIds.length + selectedFolderIds.length;
+    if (total === 0) return;
+
+    setConfirmModal({
+      isOpen: true,
+      title: 'Hapus Item Terpilih',
+      message: `Apakah Anda yakin ingin menghapus ${total} item yang dipilih (${selectedFolderIds.length} folder, ${selectedFileIds.length} file)? Tindakan ini tidak dapat dibatalkan.`,
+      onConfirm: async () => {
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        try {
+          const res = await api.post('/api/files/batch-delete', {
+            fileIds: selectedFileIds,
+            folderIds: selectedFolderIds,
+          });
+          showToast(res.data.message || `${total} item berhasil dihapus!`, 'success');
+          fetchDashboardData();
+        } catch (err: any) {
+          showToast(err.response?.data?.error || 'Gagal menghapus item terpilih', 'error');
+        }
+      },
+    });
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       {/* Navbar Header Component */}
-      <Navbar user={user} onLogout={handleLogout} uploading={uploading} uploadProgress={uploadProgress} />
+      <Navbar
+        user={user}
+        onLogout={handleLogout}
+        uploading={uploading}
+        uploadProgress={uploadProgress}
+        deleting={deleting}
+        deleteProgress={deleteProgress}
+      />
 
       {/* Main Dashboard Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex-1 w-full space-y-6 sm:space-y-8">
@@ -585,6 +465,24 @@ export const Dashboard: React.FC = () => {
                     onGenerateFolderShareCode={handleGenerateFolderShareCode}
                     onDownloadPrivate={handleDownloadPrivate}
                     onDownloadFolder={handleDownloadFolder}
+                    onBatchDelete={(selectedFileIds, selectedFolderIds) => {
+                      const total = selectedFileIds.length + selectedFolderIds.length;
+                      if (total === 0) return;
+                      setConfirmModal({
+                        isOpen: true,
+                        title: 'Hapus Item Terpilih',
+                        message: `Apakah Anda yakin ingin menghapus ${total} item yang dipilih (${selectedFolderIds.length} folder, ${selectedFileIds.length} file)? Tindakan ini tidak dapat dibatalkan.`,
+                        onConfirm: async () => {
+                          setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+                          executeDeleteWithProgress(
+                            total,
+                            `${total} Item Terpilih`,
+                            () => api.post('/api/files/batch-delete', { fileIds: selectedFileIds, folderIds: selectedFolderIds }),
+                            `${total} item berhasil dihapus!`
+                          );
+                        },
+                      });
+                    }}
                     onDeleteFolder={(id, name) => {
                       setConfirmModal({
                         isOpen: true,
@@ -592,13 +490,12 @@ export const Dashboard: React.FC = () => {
                         message: `Apakah Anda yakin ingin menghapus folder "${name || 'ini'}" beserta seluruh isinya? Tindakan ini tidak dapat dibatalkan.`,
                         onConfirm: async () => {
                           setConfirmModal((prev) => ({ ...prev, isOpen: false }));
-                          try {
-                            await api.delete(`/api/folders/${id}`);
-                            showToast('Folder berhasil dihapus!', 'success');
-                            fetchDashboardData();
-                          } catch (err: any) {
-                            showToast(err.response?.data?.error || 'Gagal menghapus folder', 'error');
-                          }
+                          executeDeleteWithProgress(
+                            1,
+                            name || 'Folder',
+                            () => api.delete(`/api/folders/${id}`),
+                            'Folder berhasil dihapus!'
+                          );
                         },
                       });
                     }}
@@ -627,13 +524,12 @@ export const Dashboard: React.FC = () => {
                         message: `Apakah Anda yakin ingin menghapus file "${name || 'ini'}" dari Google Drive Storage?`,
                         onConfirm: async () => {
                           setConfirmModal((prev) => ({ ...prev, isOpen: false }));
-                          try {
-                            await api.delete(`/api/files/${id}`);
-                            showToast('File berhasil dihapus!', 'success');
-                            fetchDashboardData();
-                          } catch (err: any) {
-                            showToast(err.response?.data?.error || 'Gagal menghapus file', 'error');
-                          }
+                          executeDeleteWithProgress(
+                            1,
+                            name || 'File',
+                            () => api.delete(`/api/files/${id}`),
+                            'File berhasil dihapus!'
+                          );
                         },
                       });
                     }}
@@ -732,6 +628,16 @@ export const Dashboard: React.FC = () => {
         statusMessage={statusMessage}
         targetFolderName={uploadTargetFolderName}
         onCancelUpload={handleCancelUpload}
+      />
+
+      {/* Floating Background Delete Progress Widget */}
+      <BackgroundDeleteWidget
+        deleting={deleting}
+        deleteProgress={deleteProgress}
+        itemCount={deleteItemCount}
+        currentItemIndex={deleteCurrentIndex}
+        currentItemName={deleteCurrentName}
+        statusMessage={deleteStatusMessage}
       />
     </div>
   );

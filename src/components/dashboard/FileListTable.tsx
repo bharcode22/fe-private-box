@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Share2, Download, Image, Video, Music, FileQuestion, Trash2, Edit2, UploadCloud, FolderPlus } from 'lucide-react';
+import { FileText, Share2, Download, Image, Video, Music, FileQuestion, Trash2, Edit2, UploadCloud, FolderPlus, CheckSquare, Folder } from 'lucide-react';
 
 export interface FolderItem {
   id: string;
@@ -34,7 +34,78 @@ interface FileListTableProps {
   onDownloadFolder?: (folderId: string, folderName: string) => void;
   onUploadClick?: () => void;
   onCreateFolderClick?: () => void;
+  onBatchDelete?: (selectedFileIds: string[], selectedFolderIds: string[]) => void;
 }
+
+// Helper to get distinct icon and color styles per category
+const getFileCategoryStyle = (category?: string) => {
+  switch (category) {
+    case 'image':
+      return {
+        Icon: Image,
+        colorClass: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
+        textHoverClass: 'group-hover:text-emerald-300',
+      };
+    case 'video':
+      return {
+        Icon: Video,
+        colorClass: 'bg-rose-500/10 border-rose-500/20 text-rose-400',
+        textHoverClass: 'group-hover:text-rose-300',
+      };
+    case 'audio':
+      return {
+        Icon: Music,
+        colorClass: 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400',
+        textHoverClass: 'group-hover:text-cyan-300',
+      };
+    case 'other':
+      return {
+        Icon: FileQuestion,
+        colorClass: 'bg-purple-500/10 border-purple-500/20 text-purple-400',
+        textHoverClass: 'group-hover:text-purple-300',
+      };
+    default:
+      return {
+        Icon: FileText,
+        colorClass: 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400',
+        textHoverClass: 'group-hover:text-indigo-300',
+      };
+  }
+};
+
+// Custom Animated Modern Checkbox Component
+const CustomCheckbox: React.FC<{
+  checked: boolean;
+  onChange: () => void;
+  title?: string;
+}> = ({ checked, onChange, title }) => {
+  return (
+    <button
+      type="button"
+      title={title}
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        onChange();
+      }}
+      className={`inline-flex items-center justify-center w-5 h-5 rounded-md border cursor-pointer transition-all duration-200 select-none flex-shrink-0 ${checked
+        ? 'bg-gradient-to-tr from-indigo-600 to-purple-600 border-indigo-400 text-white shadow-md shadow-indigo-500/30 scale-105 ring-2 ring-indigo-500/30'
+        : 'bg-slate-900/90 border-slate-700/90 hover:border-indigo-500/60 text-transparent hover:bg-slate-800'
+        }`}
+    >
+      <svg
+        className={`w-3.5 h-3.5 transition-transform duration-200 ease-out ${checked ? 'scale-100 opacity-100' : 'scale-50 opacity-0'
+          }`}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        viewBox="0 0 24 24"
+      >
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    </button>
+  );
+};
 
 export const FileListTable: React.FC<FileListTableProps> = ({
   folders,
@@ -51,7 +122,37 @@ export const FileListTable: React.FC<FileListTableProps> = ({
   onDownloadFolder,
   onUploadClick,
   onCreateFolderClick,
+  onBatchDelete,
 }) => {
+  const [isSelectionMode, setIsSelectionMode] = React.useState<boolean>(false);
+  const [selectedFolderIds, setSelectedFolderIds] = React.useState<string[]>([]);
+  const [selectedFileIds, setSelectedFileIds] = React.useState<string[]>([]);
+
+  const totalSelected = selectedFolderIds.length + selectedFileIds.length;
+  const totalItems = folders.length + files.length;
+  const isAllSelected = totalItems > 0 && selectedFolderIds.length === folders.length && selectedFileIds.length === files.length;
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedFolderIds([]);
+      setSelectedFileIds([]);
+    } else {
+      setSelectedFolderIds(folders.map((f) => f.id));
+      setSelectedFileIds(files.map((f) => f.id));
+    }
+  };
+
+  const toggleFolderSelection = (id: string) => {
+    setSelectedFolderIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const toggleFileSelection = (id: string) => {
+    setSelectedFileIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
   if (folders.length === 0 && files.length === 0) {
     return (
       <div className="p-10 sm:p-16 text-center space-y-4">
@@ -90,24 +191,94 @@ export const FileListTable: React.FC<FileListTableProps> = ({
 
   return (
     <div>
+      {/* Top Table Toolbar: Mode Pilih Toggle Button */}
+      <div className="flex items-center justify-between p-3.5 px-4 sm:px-6 bg-slate-900/60 border-b border-slate-800/80">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              const nextMode = !isSelectionMode;
+              setIsSelectionMode(nextMode);
+              if (!nextMode) {
+                setSelectedFolderIds([]);
+                setSelectedFileIds([]);
+              }
+            }}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 border cursor-pointer active:scale-95 ${isSelectionMode
+              ? 'bg-indigo-600/20 text-indigo-300 border-indigo-500/50 shadow-sm font-extrabold'
+              : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 border-slate-700/80'
+              }`}
+          >
+            <CheckSquare className={`w-4 h-4 ${isSelectionMode ? 'text-indigo-400' : 'text-slate-400'}`} />
+            <span>{isSelectionMode ? 'Selesai Pilih' : 'Pilih Item'}</span>
+          </button>
+
+          {isSelectionMode && (
+            <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
+              <CustomCheckbox
+                checked={isAllSelected}
+                onChange={toggleSelectAll}
+                title="Pilih Semua Item"
+              />
+              <span
+                onClick={toggleSelectAll}
+                className="text-xs font-bold text-slate-300 cursor-pointer hover:text-white transition select-none"
+              >
+                Pilih Semua ({totalItems})
+              </span>
+            </div>
+          )}
+        </div>
+
+        {isSelectionMode && (
+          <div className="flex items-center gap-2">
+            {totalSelected > 0 && (
+              <span className="text-xs font-bold text-indigo-300 bg-indigo-500/10 px-2.5 py-1 rounded-lg border border-indigo-500/30">
+                {totalSelected} Dipilih
+              </span>
+            )}
+            {onBatchDelete && totalSelected > 0 && (
+              <button
+                onClick={() => onBatchDelete(selectedFileIds, selectedFolderIds)}
+                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-red-600/20 active:scale-95"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Hapus ({totalSelected})</span>
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Mobile View: Cards Layout (screens < 768px) */}
       <div className="block md:hidden divide-y divide-slate-800/80">
         {/* Folders Mobile Cards */}
         {folders.map((folder) => (
           <div
             key={folder.id}
-            onClick={() => onFolderClick(folder.id, folder.name)}
-            className="p-4 hover:bg-slate-900/60 transition space-y-3 cursor-pointer group"
+            onClick={() => {
+              if (isSelectionMode) {
+                toggleFolderSelection(folder.id);
+              } else {
+                onFolderClick(folder.id, folder.name);
+              }
+            }}
+            className={`p-4 transition space-y-3 cursor-pointer group ${selectedFolderIds.includes(folder.id) ? 'bg-amber-950/20 border-l-4 border-amber-500' : 'hover:bg-slate-900/60'
+              }`}
           >
             <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 group-hover:scale-110 transition flex-shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                  </svg>
+              <div className="flex items-center gap-3 min-w-0">
+                {isSelectionMode && (
+                  <CustomCheckbox
+                    checked={selectedFolderIds.includes(folder.id)}
+                    onChange={() => toggleFolderSelection(folder.id)}
+                  />
+                )}
+                <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-110 transition flex-shrink-0">
+                  <Folder className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-semibold text-sm text-white group-hover:text-indigo-400 transition truncate">{folder.name}</h4>
+                  <h4 className="font-semibold text-sm text-white group-hover:text-amber-300 transition truncate">{folder.name}</h4>
                   <p className="text-[11px] text-slate-400">
                     Folder • {new Date(folder.createdAt).toLocaleDateString('id-ID')}
                   </p>
@@ -129,8 +300,9 @@ export const FileListTable: React.FC<FileListTableProps> = ({
             <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-800/40" onClick={(e) => e.stopPropagation()}>
               {onDownloadFolder && (
                 <button
+                  disabled={isSelectionMode}
                   onClick={() => onDownloadFolder(folder.id, folder.name)}
-                  className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Unduh</span>
@@ -138,8 +310,9 @@ export const FileListTable: React.FC<FileListTableProps> = ({
               )}
               {onGenerateFolderShareCode && (
                 <button
+                  disabled={isSelectionMode}
                   onClick={() => onGenerateFolderShareCode(folder.id, folder.name, folder.shares)}
-                  className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                 >
                   <Share2 className="w-3.5 h-3.5" />
                   <span>Bagikan</span>
@@ -147,8 +320,9 @@ export const FileListTable: React.FC<FileListTableProps> = ({
               )}
               {onRenameFolder && (
                 <button
+                  disabled={isSelectionMode}
                   onClick={() => onRenameFolder(folder.id, folder.name)}
-                  className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                 >
                   <Edit2 className="w-3.5 h-3.5" />
                   <span>Ubah Nama</span>
@@ -156,8 +330,9 @@ export const FileListTable: React.FC<FileListTableProps> = ({
               )}
               {onDeleteFolder && (
                 <button
+                  disabled={isSelectionMode}
                   onClick={() => onDeleteFolder(folder.id, folder.name)}
-                  className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   <span>Hapus</span>
@@ -169,21 +344,32 @@ export const FileListTable: React.FC<FileListTableProps> = ({
 
         {/* Files Mobile Cards */}
         {files.map((file) => {
-          let Icon = FileText;
-          if (file.category === 'image') Icon = Image;
-          else if (file.category === 'video') Icon = Video;
-          else if (file.category === 'audio') Icon = Music;
-          else if (file.category === 'other') Icon = FileQuestion;
+          const { Icon, colorClass, textHoverClass } = getFileCategoryStyle(file.category);
 
           return (
-            <div key={file.id} className="p-4 hover:bg-slate-900/40 transition space-y-3">
+            <div
+              key={file.id}
+              onClick={() => {
+                if (isSelectionMode) toggleFileSelection(file.id);
+              }}
+              className={`p-4 transition space-y-3 ${selectedFileIds.includes(file.id) ? 'bg-indigo-950/20 border-l-4 border-indigo-500' : 'hover:bg-slate-900/40'
+                }`}
+            >
               <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex-shrink-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  {isSelectionMode && (
+                    <CustomCheckbox
+                      checked={selectedFileIds.includes(file.id)}
+                      onChange={() => toggleFileSelection(file.id)}
+                    />
+                  )}
+                  <div className={`p-2 rounded-xl border flex-shrink-0 ${colorClass}`}>
                     <Icon className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="font-semibold text-sm text-white truncate max-w-[200px]">{file.fileName}</h4>
+                    <h4 className={`font-semibold text-sm text-white truncate max-w-[180px] transition ${textHoverClass}`}>
+                      {file.fileName}
+                    </h4>
                     <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
                       <span>{formatBytes(Number(file.fileSize))}</span>
                       <span>•</span>
@@ -204,25 +390,28 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                 )}
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-800/40 flex-wrap">
+              <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-800/40 flex-wrap" onClick={(e) => e.stopPropagation()}>
                 <button
+                  disabled={isSelectionMode}
                   onClick={() => onDownloadPrivate(file.id, file.fileName)}
-                  className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Unduh</span>
                 </button>
                 <button
+                  disabled={isSelectionMode}
                   onClick={() => onGenerateShareCode(file.id, file.fileName, file.shares)}
-                  className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                 >
                   <Share2 className="w-3.5 h-3.5" />
                   <span>Bagikan</span>
                 </button>
                 {onRenameFile && (
                   <button
+                    disabled={isSelectionMode}
                     onClick={() => onRenameFile(file.id, file.fileName)}
-                    className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
                     <span>Ubah Nama</span>
@@ -230,8 +419,9 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                 )}
                 {onDeleteFile && (
                   <button
+                    disabled={isSelectionMode}
                     onClick={() => onDeleteFile(file.id, file.fileName)}
-                    className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>Hapus</span>
@@ -248,6 +438,15 @@ export const FileListTable: React.FC<FileListTableProps> = ({
         <table className="w-full text-left text-sm text-slate-300">
           <thead className="bg-slate-900/80 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
             <tr>
+              {isSelectionMode && (
+                <th className="px-4 py-4 w-12 text-center">
+                  <CustomCheckbox
+                    checked={isAllSelected}
+                    onChange={toggleSelectAll}
+                    title="Pilih Semua Item"
+                  />
+                </th>
+              )}
               <th className="px-6 py-4 text-center">Nama File / Folder</th>
               <th className="px-6 py-4 text-center">Status Share</th>
               <th className="px-6 py-4 text-center">Ukuran</th>
@@ -259,14 +458,29 @@ export const FileListTable: React.FC<FileListTableProps> = ({
             {folders.map((folder) => (
               <tr
                 key={folder.id}
-                onClick={() => onFolderClick(folder.id, folder.name)}
-                className="hover:bg-slate-900/60 transition cursor-pointer group"
+                onClick={() => {
+                  if (isSelectionMode) {
+                    toggleFolderSelection(folder.id);
+                  } else {
+                    onFolderClick(folder.id, folder.name);
+                  }
+                }}
+                className={`transition cursor-pointer group ${selectedFolderIds.includes(folder.id) ? 'bg-amber-950/20' : 'hover:bg-slate-900/60'
+                  }`}
               >
+                {isSelectionMode && (
+                  <td className="px-4 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                    <CustomCheckbox
+                      checked={selectedFolderIds.includes(folder.id)}
+                      onChange={() => toggleFolderSelection(folder.id)}
+                    />
+                  </td>
+                )}
                 <td className="px-6 py-4 font-semibold text-white flex items-center gap-3">
-                  <svg className="w-5 h-5 text-indigo-400 group-hover:scale-110 transition flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                  </svg>
-                  <span className="truncate max-w-xs group-hover:text-indigo-400 transition">{folder.name}</span>
+                  <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-110 transition flex-shrink-0">
+                    <Folder className="w-4 h-4" />
+                  </div>
+                  <span className="truncate max-w-xs group-hover:text-amber-300 transition">{folder.name}</span>
                 </td>
                 <td className="px-6 py-4 text-center">
                   {folder.shares && folder.shares.length > 0 ? (
@@ -287,8 +501,9 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                 <td className="px-6 py-4 text-center space-x-2" onClick={(e) => e.stopPropagation()}>
                   {onDownloadFolder && (
                     <button
+                      disabled={isSelectionMode}
                       onClick={() => onDownloadFolder(folder.id, folder.name)}
-                      className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition inline-flex items-center gap-1.5 cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                       title="Unduh Folder (ZIP)"
                     >
                       <Download className="w-3.5 h-3.5" />
@@ -296,8 +511,9 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                   )}
                   {onGenerateFolderShareCode && (
                     <button
+                      disabled={isSelectionMode}
                       onClick={() => onGenerateFolderShareCode(folder.id, folder.name, folder.shares)}
-                      className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5 cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                       title="Manajemen Akses Kode"
                     >
                       <Share2 className="w-3.5 h-3.5" />
@@ -305,8 +521,9 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                   )}
                   {onRenameFolder && (
                     <button
+                      disabled={isSelectionMode}
                       onClick={() => onRenameFolder(folder.id, folder.name)}
-                      className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5 cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                       title="Ubah Nama Folder"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
@@ -314,8 +531,9 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                   )}
                   {onDeleteFolder && (
                     <button
+                      disabled={isSelectionMode}
                       onClick={() => onDeleteFolder(folder.id, folder.name)}
-                      className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5 cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                       title="Hapus Folder"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -325,17 +543,30 @@ export const FileListTable: React.FC<FileListTableProps> = ({
               </tr>
             ))}
             {files.map((file) => {
-              let Icon = FileText;
-              if (file.category === 'image') Icon = Image;
-              else if (file.category === 'video') Icon = Video;
-              else if (file.category === 'audio') Icon = Music;
-              else if (file.category === 'other') Icon = FileQuestion;
+              const { Icon, colorClass, textHoverClass } = getFileCategoryStyle(file.category);
 
               return (
-                <tr key={file.id} className="hover:bg-slate-900/40 transition">
+                <tr
+                  key={file.id}
+                  onClick={() => {
+                    if (isSelectionMode) toggleFileSelection(file.id);
+                  }}
+                  className={`transition ${selectedFileIds.includes(file.id) ? 'bg-indigo-950/30' : 'hover:bg-slate-900/40'
+                    } ${isSelectionMode ? 'cursor-pointer' : ''}`}
+                >
+                  {isSelectionMode && (
+                    <td className="px-4 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                      <CustomCheckbox
+                        checked={selectedFileIds.includes(file.id)}
+                        onChange={() => toggleFileSelection(file.id)}
+                      />
+                    </td>
+                  )}
                   <td className="px-6 py-4 font-semibold text-white flex items-center gap-3">
-                    <Icon className="w-5 h-5 text-indigo-400 flex-shrink-0" />
-                    <span className="truncate max-w-xs">{file.fileName}</span>
+                    <div className={`p-1.5 rounded-lg border flex-shrink-0 ${colorClass}`}>
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <span className={`truncate max-w-xs transition ${textHoverClass}`}>{file.fileName}</span>
                   </td>
                   <td className="px-6 py-4 text-center">
                     {file.shares && file.shares.length > 0 ? (
@@ -355,23 +586,26 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                   </td>
                   <td className="px-6 py-4 text-center space-x-2">
                     <button
+                      disabled={isSelectionMode}
                       onClick={() => onDownloadPrivate(file.id, file.fileName)}
-                      className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition inline-flex items-center gap-1.5 cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                       title="Unduh"
                     >
                       <Download className="w-3.5 h-3.5" />
                     </button>
                     <button
+                      disabled={isSelectionMode}
                       onClick={() => onGenerateShareCode(file.id, file.fileName, file.shares)}
-                      className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5 cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                       title="Manajemen Akses Kode"
                     >
                       <Share2 className="w-3.5 h-3.5" />
                     </button>
                     {onRenameFile && (
                       <button
+                        disabled={isSelectionMode}
                         onClick={() => onRenameFile(file.id, file.fileName)}
-                        className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5 cursor-pointer"
+                        className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                         title="Rename"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
@@ -379,8 +613,9 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                     )}
                     {onDeleteFile && (
                       <button
+                        disabled={isSelectionMode}
                         onClick={() => onDeleteFile(file.id, file.fileName)}
-                        className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5 cursor-pointer"
+                        className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
                         title="Hapus"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
