@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { User, ShieldCheck, ArrowLeft, RotateCw } from 'lucide-react';
 import api from '../services/api';
 import { Navbar } from '../components/layout/Navbar';
@@ -11,6 +11,7 @@ import { getDaysRemaining } from '../utils/dateUtils';
 
 export const Account: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState<any>(null);
   const [userInfo, setUserInfo] = useState<{
     storageLimit: number;
@@ -53,6 +54,13 @@ export const Account: React.FC = () => {
     navigate('/', { replace: true });
   };
 
+  const handleBack = () => {
+    const stateFrom = location.state?.from;
+    const lastSearch = sessionStorage.getItem('pb_last_dashboard_search') || '';
+    const returnUrl = stateFrom || `/dashboard${lastSearch}`;
+    navigate(returnUrl);
+  };
+
   const usedBytes = Number(userInfo?.storageUsed || 0);
   const limitBytes = Number(userInfo?.storageLimit || import.meta.env.VITE_FREE_USER_QUOTA_BYTES || 10737418240);
   const quotaPercent = Math.min(100, (usedBytes / limitBytes) * 100);
@@ -70,13 +78,13 @@ export const Account: React.FC = () => {
       <main className="max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 flex-1 space-y-6 sm:space-y-8">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <Link
-              to="/dashboard"
-              className="p-2 sm:p-2.5 rounded-xl border border-slate-800 hover:border-slate-700 hover:bg-slate-900 text-slate-400 hover:text-white transition flex-shrink-0"
+            <button
+              onClick={handleBack}
+              className="p-2 sm:p-2.5 rounded-xl border border-slate-800 hover:border-slate-700 hover:bg-slate-900 text-slate-400 hover:text-white transition flex-shrink-0 cursor-pointer active:scale-95"
               title="Kembali ke Dashboard"
             >
               <ArrowLeft className="w-5 h-5" />
-            </Link>
+            </button>
             <div className="min-w-0">
               <h1 className="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2 truncate">
                 <User className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-400 flex-shrink-0" />
