@@ -614,6 +614,8 @@ export const Dashboard: React.FC = () => {
                   onToggleSelectAll={toggleSelectAllDashboard}
                   totalSelected={totalSelectedDashboardItems}
                   totalItems={totalDashboardItems}
+                  totalFolders={folders.length}
+                  totalFiles={files.length}
                   onBatchDelete={() => {
                     if (totalSelectedDashboardItems === 0) return;
                     setConfirmModal({

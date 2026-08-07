@@ -419,6 +419,8 @@ export const FileListTable: React.FC<FileListTableProps> = ({
           onToggleSelectAll={toggleSelectAll}
           totalSelected={totalSelected}
           totalItems={totalItems}
+          totalFolders={folders.length}
+          totalFiles={files.length}
           onBatchDelete={() => {
             if (onBatchDelete) onBatchDelete(selectedFileIds, selectedFolderIds);
           }}

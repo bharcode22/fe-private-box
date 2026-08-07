@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckSquare, Trash2, List, LayoutGrid } from 'lucide-react';
+import { CheckSquare, Trash2, List, LayoutGrid, Files } from 'lucide-react';
 
 interface FileListToolbarProps {
   isSelectionMode: boolean;
@@ -8,6 +8,8 @@ interface FileListToolbarProps {
   onToggleSelectAll: () => void;
   totalSelected: number;
   totalItems: number;
+  totalFolders?: number;
+  totalFiles?: number;
   onBatchDelete?: () => void;
   viewMode: 'table' | 'grid';
   onViewModeChange: (mode: 'table' | 'grid') => void;
@@ -21,6 +23,8 @@ export const FileListToolbar: React.FC<FileListToolbarProps> = ({
   onToggleSelectAll,
   totalSelected,
   totalItems,
+  totalFolders,
+  totalFiles,
   onBatchDelete,
   viewMode,
   onViewModeChange,
@@ -28,7 +32,7 @@ export const FileListToolbar: React.FC<FileListToolbarProps> = ({
 }) => {
   return (
     <div className={`flex flex-wrap items-center justify-between gap-3 p-3.5 px-4 sm:px-6 bg-slate-900/90 border-b border-slate-800/80 ${className}`}>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <button
           type="button"
           onClick={onToggleSelectionMode}
@@ -40,6 +44,21 @@ export const FileListToolbar: React.FC<FileListToolbarProps> = ({
           <CheckSquare className={`w-4 h-4 ${isSelectionMode ? 'text-indigo-400' : 'text-slate-400'}`} />
           <span>{isSelectionMode ? 'Selesai Pilih' : 'Pilih Item'}</span>
         </button>
+
+        {/* Informasi Total Data di Path / Folder */}
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/50 border border-slate-700/60 text-xs shadow-inner">
+          <Files className="w-3.5 h-3.5 text-indigo-400" />
+          <div className="flex items-center gap-1">
+            <span className="text-slate-400 font-medium">Total:</span>
+            <span className="font-bold text-indigo-300">{totalItems}</span>
+            <span className="text-slate-400 font-medium">item</span>
+          </div>
+          {(totalFolders !== undefined && totalFiles !== undefined) && (
+            <span className="text-slate-400 text-[11px] font-medium border-l border-slate-700 pl-2">
+              {totalFolders} folder, {totalFiles} file
+            </span>
+          )}
+        </div>
 
         {isSelectionMode && (
           <div className="flex items-center gap-2 pl-2 border-l border-slate-800 flex-wrap">
