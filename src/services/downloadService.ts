@@ -15,7 +15,8 @@ export const downloadService = {
         responseType: 'blob',
       });
 
-      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const contentType = typeof res.headers['content-type'] === 'string' ? res.headers['content-type'] : 'application/octet-stream';
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: contentType }));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', fileName);
