@@ -23,6 +23,9 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [downloadProgress, setDownloadProgress] = useState<number>(0);
+  const [loadedBytes, setLoadedBytes] = useState<number>(0);
+  const [totalBytes, setTotalBytes] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -30,6 +33,9 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
       setPreviewUrl(null);
       setTextContent(null);
       setError(null);
+      setDownloadProgress(0);
+      setLoadedBytes(0);
+      setTotalBytes(0);
       return;
     }
 
@@ -41,10 +47,26 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
       setError(null);
       setPreviewUrl(null);
       setTextContent(null);
+      setDownloadProgress(0);
+      setLoadedBytes(0);
+      const initialTotal = file ? Number(file.fileSize) : 0;
+      setTotalBytes(initialTotal);
 
       try {
         const response = await api.get(`/api/files/${file.id}/preview`, {
           responseType: 'blob',
+          onDownloadProgress: (progressEvent) => {
+            if (!active) return;
+            const loaded = progressEvent.loaded || 0;
+            const total = progressEvent.total || (file ? Number(file.fileSize) : 0);
+
+            setLoadedBytes(loaded);
+            if (total > 0) {
+              setTotalBytes(total);
+              const percent = Math.min(100, Math.round((loaded * 100) / total));
+              setDownloadProgress(percent);
+            }
+          },
         });
 
         if (!active) return;
@@ -145,9 +167,39 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
         {/* Content Body */}
         <div className="flex-1 overflow-auto p-6 flex flex-col items-center justify-center min-h-[350px] bg-slate-950/50">
           {loading ? (
-            <div className="flex flex-col items-center justify-center space-y-3 py-12">
-              <Loader2 className="w-10 h-10 text-indigo-400 animate-spin" />
-              <p className="text-sm text-slate-400 font-medium">Memuat pratinjau file...</p>
+            <div className="flex flex-col items-center justify-center space-y-6 py-12 max-w-md w-full px-4 animate-fadeIn">
+              <div className="relative flex items-center justify-center">
+                {/* Glow ring */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 blur-xl opacity-30 animate-pulse" />
+                
+                <div className="relative p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl flex items-center justify-center text-indigo-400">
+                  <Loader2 className="w-10 h-10 animate-spin text-indigo-400" />
+                </div>
+              </div>
+
+              <div className="text-center w-full space-y-1">
+                <h4 className="text-base font-semibold text-slate-100">Memuat Pratinjau File...</h4>
+                <p className="text-xs text-slate-400 truncate max-w-xs mx-auto" title={file.fileName}>
+                  {file.fileName}
+                </p>
+              </div>
+
+              {/* Progress Card */}
+              <div className="w-full bg-slate-900/90 border border-slate-800/80 rounded-xl p-4 shadow-lg space-y-2.5">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-bold text-indigo-400 text-sm">{downloadProgress}%</span>
+                  <span className="text-slate-400 font-mono">
+                    {formatBytes(loadedBytes)} {totalBytes > 0 ? `/ ${formatBytes(totalBytes)}` : ''}
+                  </span>
+                </div>
+                
+                <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-800 shadow-inner">
+                  <div
+                    className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-400 rounded-full transition-all duration-300 ease-out shadow-sm"
+                    style={{ width: `${Math.max(downloadProgress, 3)}%` }}
+                  />
+                </div>
+              </div>
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center space-y-3 text-center max-w-md py-12">
