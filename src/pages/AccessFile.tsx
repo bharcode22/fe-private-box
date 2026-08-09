@@ -75,7 +75,7 @@ export const AccessFile: React.FC = () => {
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.toUpperCase();
     setUniqueCode(val);
-    if (val.length >= 4) {
+    if (val.trim().length > 0) {
       fetchShareInfo(val);
     } else {
       setShareInfo(null);
@@ -360,13 +360,31 @@ export const AccessFile: React.FC = () => {
             {/* Tombol Unduh */}
             <button
               type="submit"
-              disabled={downloading || (shareInfo !== null && (!shareInfo.allowDownload || !shareInfo.isActive))}
+              disabled={
+                downloading ||
+                loadingInfo ||
+                !!infoError ||
+                !shareInfo ||
+                !shareInfo.isActive ||
+                !shareInfo.allowDownload ||
+                !!shareInfo.isExpired
+              }
               className="w-full py-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold text-sm shadow-xl shadow-indigo-600/30 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {downloading ? (
                 <span>Mengunduh Data File...</span>
+              ) : loadingInfo ? (
+                <span>Memeriksa Kode Pembagian...</span>
+              ) : infoError ? (
+                <span>🔒 Kode Pembagian Tidak Ditemukan</span>
+              ) : shareInfo && !shareInfo.isActive ? (
+                <span>🔒 Link Dinonaktifkan oleh Pemilik</span>
               ) : shareInfo && !shareInfo.allowDownload ? (
                 <span>🔒 Pengunduhan Dinonaktifkan oleh Pemilik</span>
+              ) : shareInfo && shareInfo.isExpired ? (
+                <span>🔒 Link Pembagian Kadaluarsa</span>
+              ) : !shareInfo ? (
+                <span>Masukkan Kode Unik Akses</span>
               ) : (
                 <>
                   <Download className="w-4 h-4" />

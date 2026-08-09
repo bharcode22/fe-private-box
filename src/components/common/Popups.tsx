@@ -106,9 +106,10 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <div className="flex items-center gap-3 pt-2">
           <button
             onClick={onCancel}
-            className="flex-1 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-semibold transition cursor-pointer"
+            className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-bold transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5 shadow-sm"
           >
-            {cancelText}
+            <X className="w-4 h-4 text-slate-400" />
+            <span>{cancelText}</span>
           </button>
           <button
             onClick={onConfirm}

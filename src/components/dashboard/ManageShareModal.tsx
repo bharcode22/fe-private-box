@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Settings, Key, Download, ToggleLeft, ToggleRight, Calendar, Save, CheckCircle, AlertCircle, Loader2, RefreshCw, Copy, Link, Trash2 } from 'lucide-react';
+import { X, Settings, Key, Download, ToggleLeft, ToggleRight, Calendar, Save, CheckCircle, AlertCircle, Loader2, RefreshCw, Copy, Link as LinkIcon, Trash2 } from 'lucide-react';
 import api from '../../services/api';
 import { ConfirmModal } from '../common/Popups';
 
@@ -42,7 +42,6 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
       setAllowDownload(share.allowDownload ?? true);
       setIsActive(share.isActive ?? true);
       if (share.expiresAt) {
-        // Format to YYYY-MM-DD for date input
         const dateObj = new Date(share.expiresAt);
         const dateStr = dateObj.toISOString().split('T')[0];
         setExpiresAt(dateStr);
@@ -132,19 +131,19 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-      <div className="relative w-full max-w-lg max-h-[90vh] bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-y-auto flex flex-col">
-        {/* Header */}
+      <div className="relative w-full max-w-lg max-h-[90vh] bg-slate-900 border border-slate-800/90 rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+        {/* Consistent Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/80 bg-slate-900/90 sticky top-0 z-10">
           <div className="flex items-center space-x-3 overflow-hidden">
-            <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex-shrink-0">
+            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-purple-500/20 to-indigo-500/20 border border-purple-500/30 text-purple-400 flex-shrink-0 shadow-md shadow-purple-500/10">
               <Settings className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-base font-semibold text-slate-100 truncate">
+              <h3 className="text-base font-extrabold text-white truncate">
                 Kelola Link Pembagian
               </h3>
               {fileName && (
-                <p className="text-xs text-slate-400 truncate max-w-xs" title={fileName}>
+                <p className="text-xs text-slate-400 truncate max-w-xs mt-0.5" title={fileName}>
                   {fileName}
                 </p>
               )}
@@ -153,14 +152,15 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all cursor-pointer active:scale-95"
+            title="Tutup"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
           {errorMsg && (
             <div className="p-3.5 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -175,10 +175,10 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
             </div>
           )}
 
-          {/* Edit Kode Akses dengan Tombol Acak & Salin */}
-          <div className="space-y-2">
+          {/* Edit Kode Akses & Salin */}
+          <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+              <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                 <Key className="w-3.5 h-3.5 text-indigo-400" /> Kode Akses Pembagian
               </label>
               <button
@@ -203,7 +203,7 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
               <button
                 type="button"
                 onClick={handleCopyCode}
-                className="p-2.5 rounded-xl bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600/40 transition cursor-pointer border border-indigo-500/20"
+                className="p-2.5 rounded-xl bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600/40 transition cursor-pointer border border-indigo-500/20 active:scale-95"
                 title="Salin Kode Akses"
               >
                 <Copy className="w-4 h-4" />
@@ -222,10 +222,10 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
                   setSuccessMsg('Link publik berhasil disalin!');
                   setTimeout(() => setSuccessMsg(''), 2000);
                 }}
-                className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold transition flex items-center gap-1.5 flex-shrink-0 cursor-pointer shadow-md shadow-indigo-600/20"
+                className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold transition flex items-center gap-1.5 flex-shrink-0 cursor-pointer shadow-md shadow-indigo-600/20 active:scale-95"
                 title="Salin Tautan Publik"
               >
-                <Link className="w-3.5 h-3.5" />
+                <LinkIcon className="w-3.5 h-3.5" />
                 <span>Salin Link</span>
               </button>
             </div>
@@ -239,7 +239,7 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
                   <Download className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-semibold text-slate-200">Izinkan Pengunduhan</h4>
+                  <h4 className="text-xs font-bold text-slate-200">Izinkan Pengunduhan</h4>
                   <p className="text-[11px] text-slate-400">
                     {allowDownload
                       ? 'Penerima link dapat melihat pratinjau & mengunduh file'
@@ -251,7 +251,7 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
               <button
                 type="button"
                 onClick={() => setAllowDownload(!allowDownload)}
-                className={`p-1 rounded-xl transition-colors ${allowDownload ? 'text-indigo-400' : 'text-slate-500'}`}
+                className={`p-1 rounded-xl transition-colors cursor-pointer ${allowDownload ? 'text-indigo-400' : 'text-slate-500'}`}
               >
                 {allowDownload ? (
                   <ToggleRight className="w-8 h-8 text-indigo-500" />
@@ -270,7 +270,7 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
                   <Settings className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-semibold text-slate-200">Status Link Akses</h4>
+                  <h4 className="text-xs font-bold text-slate-200">Status Link Akses</h4>
                   <p className="text-[11px] text-slate-400">
                     {isActive ? 'Link aktif dan dapat diakses publik' : 'Link dinonaktifkan sementara'}
                   </p>
@@ -280,7 +280,7 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
               <button
                 type="button"
                 onClick={() => setIsActive(!isActive)}
-                className={`p-1 rounded-xl transition-colors ${isActive ? 'text-emerald-400' : 'text-slate-500'}`}
+                className={`p-1 rounded-xl transition-colors cursor-pointer ${isActive ? 'text-emerald-400' : 'text-slate-500'}`}
               >
                 {isActive ? (
                   <ToggleRight className="w-8 h-8 text-emerald-500" />
@@ -292,8 +292,8 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
           </div>
 
           {/* Expiration Date */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+          <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-1.5">
+            <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-purple-400" /> Tanggal Kadaluarsa (Opsional)
             </label>
             <input
@@ -304,13 +304,13 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
             />
           </div>
 
-          {/* Buttons */}
-          <div className="flex items-center justify-between pt-3 border-t border-slate-800/80">
+          {/* Consistent Footer Action Bar */}
+          <div className="flex items-center justify-between pt-4 border-t border-slate-800/80 sticky bottom-0 bg-slate-900">
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
               disabled={loading}
-              className="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/30 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="px-3.5 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/30 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95"
               title="Hapus Link & Cabut Semua Izin Pengunduhan"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -321,14 +321,15 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2.5 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+                className="px-2.5 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700/80 text-slate-200 hover:text-white font-bold text-xs border border-slate-700/80 transition-all shadow-sm cursor-pointer active:scale-95 flex items-center gap-1.5"
               >
-                Batal
+                <X className="w-2.5 h-2.5 text-slate-400" />
+                <span className='btn'>Batal</span>
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-5 py-2.5 text-xs font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-xl transition-all shadow-md shadow-indigo-600/30 flex items-center gap-2 cursor-pointer"
+                className="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-xl transition-all shadow-md shadow-indigo-600/30 flex items-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
               >
                 {loading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
