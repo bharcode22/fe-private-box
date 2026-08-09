@@ -770,7 +770,7 @@ export const Dashboard: React.FC = () => {
           {/* Access Logs Table Component */}
           {activeTab === 'logs' && (
             <div className="rounded-2xl glass-card border border-slate-800 overflow-hidden">
-              <AccessLogsTable logs={accessLogs} />
+              <AccessLogsTable logs={accessLogs} onRefreshLogs={fetchDashboardData} />
             </div>
           )}
         </div>

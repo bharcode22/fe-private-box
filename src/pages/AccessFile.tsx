@@ -23,8 +23,8 @@ export const AccessFile: React.FC = () => {
     e.preventDefault();
     setErrorMsg('');
 
-    if (!uniqueCode || !accessorEmail) {
-      setErrorMsg('Harap isi Kode Unik dan Alamat Email Anda.');
+    if (!uniqueCode || uniqueCode.trim() === '') {
+      setErrorMsg('Harap masukkan Kode Unik Akses.');
       return;
     }
 
@@ -34,7 +34,7 @@ export const AccessFile: React.FC = () => {
         '/api/share/download',
         {
           uniqueCode: uniqueCode.trim().toUpperCase(),
-          accessorEmail: accessorEmail.trim(),
+          accessorEmail: accessorEmail.trim() || 'Anonim',
         },
         { responseType: 'blob' }
       );
@@ -117,7 +117,7 @@ export const AccessFile: React.FC = () => {
               <Lock className="w-6 h-6" />
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-white">Unduh File / Folder Terproteksi</h1>
-            <p className="text-xs text-slate-400">Masukkan kode unik dan email Anda untuk mengunduh file atau folder (ZIP) yang dibagikan.</p>
+            <p className="text-xs text-slate-400">Masukkan kode unik untuk mengunduh file atau folder (ZIP) yang dibagikan.</p>
           </div>
 
           {errorMsg && (
@@ -129,7 +129,7 @@ export const AccessFile: React.FC = () => {
           <form onSubmit={handleDownloadPublic} className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <Key className="w-3.5 h-3.5 text-indigo-400" /> Kode Unik File / Folder
+                <Key className="w-3.5 h-3.5 text-indigo-400" /> Kode Unik File / Folder <span className="text-rose-400">*</span>
               </label>
               <input
                 type="text"
@@ -141,12 +141,15 @@ export const AccessFile: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <Mail className="w-3.5 h-3.5 text-purple-400" /> Email Anda (Pengunduh)
+              <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5 text-purple-400" /> Email Anda
+                </span>
+                <span className="text-[11px] text-slate-500 font-normal">(Opsional)</span>
               </label>
               <input
                 type="email"
-                placeholder="nama@email.com"
+                placeholder="nama@email.com (biarkan kosong untuk Anonim)"
                 value={accessorEmail}
                 onChange={(e) => setAccessorEmail(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 focus:border-indigo-500 text-white placeholder:text-slate-600 text-sm focus:outline-none"
@@ -155,7 +158,7 @@ export const AccessFile: React.FC = () => {
 
             <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 text-slate-400 text-[11px] flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-              <span>Email Anda akan dicatat dalam log akses pemilik file/folder untuk transparansi keamanan.</span>
+              <span>Jika email dikosongkan, nama pengunduh akan otomatis dicatat sebagai <strong>Anonim</strong>.</span>
             </div>
 
             <button

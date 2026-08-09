@@ -2,10 +2,13 @@ import api from './api';
 
 export interface ShareModalData {
   id: string;
+  shareId?: string;
   name: string;
   type: 'file' | 'folder';
   code?: string;
   isActive?: boolean;
+  allowDownload?: boolean;
+  expiresAt?: string | null;
 }
 
 export const shareService = {
@@ -22,10 +25,13 @@ export const shareService = {
     if (existingShare) {
       return {
         id,
+        shareId: existingShare.id,
         name,
         type,
         code: existingShare.uniqueCode,
-        isActive: existingShare.isActive,
+        isActive: existingShare.isActive !== false,
+        allowDownload: existingShare.allowDownload !== false,
+        expiresAt: existingShare.expiresAt || null,
       };
     }
 
@@ -33,26 +39,31 @@ export const shareService = {
     const res = await api.post(endpoint);
     return {
       id,
+      shareId: res.data.shareId,
       name,
       type,
       code: res.data.uniqueCode,
       isActive: res.data.isActive !== false,
+      allowDownload: res.data.allowDownload !== false,
+      expiresAt: res.data.expiresAt || null,
     };
   },
 
   /**
-   * Memperbarui kode unik pembagian atau status aktif file/folder
+   * Memperbarui kode unik pembagian, status unduh, status aktif, atau tanggal kadaluarsa
    */
   async updateShareCode(
     type: 'file' | 'folder',
     id: string,
-    options: { customCode?: string; isActive?: boolean }
+    options: { customCode?: string; isActive?: boolean; allowDownload?: boolean; expiresAt?: string | null }
   ) {
     const endpoint = type === 'folder' ? `/api/folders/${id}/share` : `/api/files/${id}/share`;
     const res = await api.put(endpoint, options);
     return {
       code: res.data.uniqueCode as string,
-      isActive: res.data.isActive as boolean,
+      isActive: res.data.isActive !== false,
+      allowDownload: res.data.allowDownload !== false,
+      expiresAt: res.data.expiresAt || null,
     };
   },
 
@@ -64,7 +75,9 @@ export const shareService = {
     const res = await api.post(endpoint);
     return {
       code: res.data.uniqueCode as string,
-      isActive: res.data.isActive as boolean,
+      isActive: res.data.isActive !== false,
+      allowDownload: res.data.allowDownload !== false,
+      expiresAt: res.data.expiresAt || null,
     };
   },
 };
