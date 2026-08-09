@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Settings, Key, Download, ToggleLeft, ToggleRight, Calendar, Save, CheckCircle, AlertCircle, Loader2, RefreshCw, Copy, Link } from 'lucide-react';
+import { X, Settings, Key, Download, ToggleLeft, ToggleRight, Calendar, Save, CheckCircle, AlertCircle, Loader2, RefreshCw, Copy, Link, Trash2 } from 'lucide-react';
 import api from '../../services/api';
+import { ConfirmModal } from '../common/Popups';
 
 export interface ShareData {
   id: string;
@@ -31,6 +32,7 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
   const [isActive, setIsActive] = useState(true);
   const [expiresAt, setExpiresAt] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -49,6 +51,7 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
       }
       setErrorMsg('');
       setSuccessMsg('');
+      setShowDeleteConfirm(false);
     }
   }, [share, isOpen]);
 
@@ -101,6 +104,27 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
       console.error('Failed to update share settings:', err);
       const msg = err.response?.data?.error || 'Gagal memperbarui pengaturan link.';
       setErrorMsg(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmDeleteShare = async () => {
+    setShowDeleteConfirm(false);
+    if (!share) return;
+
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      await api.delete(`/api/share/${share.id}`);
+      setSuccessMsg('Link pembagian dan izin pengunduhan berhasil dihapus!');
+      setTimeout(() => {
+        if (onSuccess) onSuccess();
+        onClose();
+      }, 1000);
+    } catch (err: any) {
+      console.error('Failed to delete share link:', err);
+      setErrorMsg(err.response?.data?.error || 'Gagal menghapus link pembagian');
     } finally {
       setLoading(false);
     }
@@ -281,28 +305,53 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
           </div>
 
           {/* Buttons */}
-          <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800/80">
+          <div className="flex items-center justify-between pt-3 border-t border-slate-800/80">
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2.5 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
+              onClick={() => setShowDeleteConfirm(true)}
               disabled={loading}
-              className="px-5 py-2.5 text-xs font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-xl transition-all shadow-md shadow-indigo-600/30 flex items-center gap-2"
+              className="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/30 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              title="Hapus Link & Cabut Semua Izin Pengunduhan"
             >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-              <span>Simpan Perubahan</span>
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Hapus Link</span>
             </button>
+
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2.5 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-5 py-2.5 text-xs font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-xl transition-all shadow-md shadow-indigo-600/30 flex items-center gap-2 cursor-pointer"
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                <span>Simpan Perubahan</span>
+              </button>
+            </div>
           </div>
         </form>
+
+        {/* Custom Confirmation Popup Modal */}
+        <ConfirmModal
+          isOpen={showDeleteConfirm}
+          title="Hapus Link Pembagian"
+          message={`Apakah Anda yakin ingin menghapus link pembagian "${uniqueCode}"? Semua izin pengunduhan akan dicabut dan log pembagian akan dibersihkan.`}
+          confirmText="Ya, Hapus Link"
+          cancelText="Batal"
+          isDanger={true}
+          onConfirm={handleConfirmDeleteShare}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
       </div>
     </div>,
     document.body

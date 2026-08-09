@@ -59,6 +59,8 @@ export const ToastContainer: React.FC<{
   );
 };
 
+import { createPortal } from 'react-dom';
+
 // Custom Confirmation Dialog (Replaces window.confirm)
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -83,8 +85,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[99999] flex items-center justify-center p-4">
       <div className="max-w-md w-full glass-card p-5 sm:p-6 rounded-3xl border border-slate-800 space-y-4 sm:space-y-5 relative shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
         <div className="flex items-start gap-4">
           <div
@@ -119,7 +121,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

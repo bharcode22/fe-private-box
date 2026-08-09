@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { User, ShieldCheck, ArrowLeft, RotateCw } from 'lucide-react';
+import { User, ShieldCheck, ArrowLeft, RotateCw, LogOut } from 'lucide-react';
 import api from '../services/api';
 import { Navbar } from '../components/layout/Navbar';
 import { AccountStatusCards } from '../components/dashboard/AccountStatusCards';
@@ -71,8 +71,8 @@ export const Account: React.FC = () => {
       {/* Background Accents */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
-      {/* Navbar Header */}
-      <Navbar user={user} onLogout={handleLogout} />
+      {/* Navbar Header (Tanpa Tombol Logout di Navbar) */}
+      <Navbar user={user} />
 
       {/* Main Account Content */}
       <main className="max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 flex-1 space-y-6 sm:space-y-8">
@@ -106,7 +106,7 @@ export const Account: React.FC = () => {
         </div>
 
         {/* User Profile Card */}
-        <div className="p-4 sm:p-6 rounded-3xl glass-card border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+        <div className="p-5 sm:p-6 rounded-3xl glass-card border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
           <div className="flex items-center gap-3.5 sm:gap-4">
             <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white text-lg sm:text-xl font-extrabold shadow-lg shadow-indigo-500/20 flex-shrink-0">
               {user?.name?.charAt(0)?.toUpperCase() || 'U'}
@@ -120,7 +120,7 @@ export const Account: React.FC = () => {
             </div>
           </div>
 
-          <div className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 bg-slate-900/80 px-3.5 py-2 rounded-xl border border-slate-800/80 text-xs">
+          <div className="flex items-center gap-2 bg-slate-900/80 px-3.5 py-2 rounded-xl border border-slate-800/80 text-xs">
             <span className="text-slate-400">Tipe Lisensi:</span>
             <span className="font-bold text-indigo-400">Free Tier (10 GB / 30 Hari)</span>
           </div>
@@ -143,6 +143,17 @@ export const Account: React.FC = () => {
               formatBytes={formatBytes}
             />
           )}
+        </div>
+
+        {/* Single Logout Button Section at the Very Bottom */}
+        <div className="pt-6 border-t border-slate-800/80 flex justify-center">
+          <button
+            onClick={handleLogout}
+            className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-rose-600/15 hover:bg-rose-600/30 text-rose-300 hover:text-rose-200 border border-rose-500/30 text-sm font-bold transition flex items-center justify-center gap-2.5 cursor-pointer shadow-lg shadow-rose-950/30 active:scale-95"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Keluar dari Akun</span>
+          </button>
         </div>
       </main>
 

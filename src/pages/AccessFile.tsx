@@ -1,23 +1,87 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Download, Lock, Mail, Key, ShieldCheck } from 'lucide-react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
+import { Download, Lock, Mail, Key, FileText, Folder, RefreshCw, AlertCircle, Sparkles, CheckCircle2, HardDrive } from 'lucide-react';
 import api from '../services/api';
-import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 
+interface PublicShareInfo {
+  type: 'file' | 'folder';
+  name: string;
+  fileSize: number;
+  mimeType?: string;
+  allowDownload: boolean;
+  isActive: boolean;
+  expiresAt?: string | null;
+  isExpired?: boolean;
+}
+
+const formatBytes = (bytes: number) => {
+  if (!bytes || bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
+
 export const AccessFile: React.FC = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [uniqueCode, setUniqueCode] = useState('');
   const [accessorEmail, setAccessorEmail] = useState('');
+  const [shareInfo, setShareInfo] = useState<PublicShareInfo | null>(null);
+  const [loadingInfo, setLoadingInfo] = useState(false);
+  const [infoError, setInfoError] = useState('');
+
+  // Download & Progress state
   const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [loadedBytes, setLoadedBytes] = useState(0);
+  const [totalBytes, setTotalBytes] = useState(0);
+  const [downloadSpeed, setDownloadSpeed] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [authError, setAuthError] = useState('');
 
   useEffect(() => {
     const codeParam = searchParams.get('code');
     if (codeParam) {
-      setUniqueCode(codeParam.trim().toUpperCase());
+      const formatted = codeParam.trim().toUpperCase();
+      setUniqueCode(formatted);
+      fetchShareInfo(formatted);
     }
   }, [searchParams]);
+
+  const fetchShareInfo = async (code: string) => {
+    if (!code || code.trim() === '') {
+      setShareInfo(null);
+      setInfoError('');
+      return;
+    }
+
+    setLoadingInfo(true);
+    setInfoError('');
+    try {
+      const res = await api.get(`/api/share/info/${code.trim().toUpperCase()}`);
+      setShareInfo(res.data);
+    } catch (err: any) {
+      setShareInfo(null);
+      const msg = err.response?.data?.error || 'Kode pembagian tidak ditemukan atau tidak valid.';
+      setInfoError(msg);
+    } finally {
+      setLoadingInfo(false);
+    }
+  };
+
+  const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.toUpperCase();
+    setUniqueCode(val);
+    if (val.length >= 4) {
+      fetchShareInfo(val);
+    } else {
+      setShareInfo(null);
+      setInfoError('');
+    }
+  };
 
   const handleDownloadPublic = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +93,14 @@ export const AccessFile: React.FC = () => {
     }
 
     setDownloading(true);
+    setDownloadProgress(0);
+    setLoadedBytes(0);
+    setTotalBytes(0);
+    setDownloadSpeed('');
+
+    let lastLoaded = 0;
+    let lastTime = Date.now();
+
     try {
       const res = await api.post(
         '/api/share/download',
@@ -36,7 +108,28 @@ export const AccessFile: React.FC = () => {
           uniqueCode: uniqueCode.trim().toUpperCase(),
           accessorEmail: accessorEmail.trim() || 'Anonim',
         },
-        { responseType: 'blob' }
+        {
+          responseType: 'blob',
+          onDownloadProgress: (progressEvent) => {
+            const loaded = progressEvent.loaded;
+            const total = progressEvent.total || shareInfo?.fileSize || 0;
+            setLoadedBytes(loaded);
+            if (total > 0) {
+              setTotalBytes(total);
+              const percent = Math.round((loaded * 100) / total);
+              setDownloadProgress(percent);
+            }
+
+            const now = Date.now();
+            const timeDiff = (now - lastTime) / 1000;
+            if (timeDiff >= 0.5) {
+              const speed = (loaded - lastLoaded) / timeDiff;
+              setDownloadSpeed(`${(speed / (1024 * 1024)).toFixed(1)} MB/s`);
+              lastLoaded = loaded;
+              lastTime = now;
+            }
+          },
+        }
       );
 
       const getHeader = (name: string) => {
@@ -49,30 +142,24 @@ export const AccessFile: React.FC = () => {
       let fileName = '';
 
       if (contentDisposition) {
-        // 1. Try filename*=UTF-8''...
         const filenameStarMatch = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
         if (filenameStarMatch && filenameStarMatch[1]) {
           try {
             fileName = decodeURIComponent(filenameStarMatch[1]);
-          } catch (_) {
-            fileName = filenameStarMatch[1];
-          }
+          } catch (_) { }
         }
-        // 2. Try filename="..." or filename=...
         if (!fileName) {
           const fileNameMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
           if (fileNameMatch && fileNameMatch[1]) {
             try {
               fileName = decodeURIComponent(fileNameMatch[1]);
-            } catch (_) {
-              fileName = fileNameMatch[1];
-            }
+            } catch (_) { }
           }
         }
       }
 
       if (!fileName) {
-        fileName = `download_${uniqueCode.trim().toUpperCase()}`;
+        fileName = shareInfo?.name || `download_${uniqueCode.trim().toUpperCase()}`;
       }
 
       const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -90,7 +177,7 @@ export const AccessFile: React.FC = () => {
             const text = await err.response.data.text();
             const json = JSON.parse(text);
             if (json.error) message = json.error;
-          } catch (_) {}
+          } catch (_) { }
         } else if (typeof err.response.data === 'object' && err.response.data.error) {
           message = err.response.data.error;
         }
@@ -101,45 +188,132 @@ export const AccessFile: React.FC = () => {
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    if (!credentialResponse.credential) {
+      setAuthError('Kredensial login Google tidak ditemukan.');
+      return;
+    }
+
+    setAuthError('');
+    try {
+      const res = await api.post('/api/auth/google', {
+        credential: credentialResponse.credential,
+      });
+      const data = res.data;
+      localStorage.setItem('pb_token', data.token);
+      localStorage.setItem('pb_user', JSON.stringify(data.user));
+
+      if (data.isNewUser) {
+        navigate('/terms', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
+    } catch (err: any) {
+      setAuthError(err.response?.data?.error || 'Gagal memverifikasi login Google.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between relative overflow-hidden">
       {/* Background Glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-purple-600/15 rounded-full blur-3xl pointer-events-none"></div>
 
-      {/* Modular Navbar Header Component */}
-      <Navbar showShareButton={false} />
+      {/* Main Container */}
+      <main className="max-w-xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex-1 flex flex-col justify-center">
+        {/* Brand Header Header minimal */}
+        <div className="flex items-center justify-center space-x-2.5 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+            <HardDrive className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-xl font-bold tracking-tight">
+            Private<span className="text-indigo-400">Box</span>
+          </span>
+        </div>
 
-      {/* Download Form */}
-      <main className="max-w-md w-full mx-auto px-4 sm:px-6 py-6 sm:py-12 flex-1 flex flex-col justify-center">
-        <div className="glass-card p-5 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl space-y-5 sm:space-y-6">
+        <div className="glass-card p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl space-y-6">
           <div className="text-center space-y-2">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 mx-auto">
-              <Lock className="w-6 h-6" />
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 mx-auto shadow-lg shadow-indigo-500/10">
+              <Lock className="w-7 h-7" />
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-white">Unduh File / Folder Terproteksi</h1>
-            <p className="text-xs text-slate-400">Masukkan kode unik untuk mengunduh file atau folder (ZIP) yang dibagikan.</p>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              Masukkan kode unik untuk mengunduh file atau isi folder (ZIP) yang dibagikan secara aman.
+            </p>
           </div>
 
           {errorMsg && (
-            <div className="p-3.5 rounded-xl bg-red-950/40 border border-red-500/40 text-red-300 text-xs">
-              {errorMsg}
+            <div className="p-3.5 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{errorMsg}</span>
             </div>
           )}
 
-          <form onSubmit={handleDownloadPublic} className="space-y-4">
+          <form onSubmit={handleDownloadPublic} className="space-y-5">
+            {/* Input Kode Unik */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <Key className="w-3.5 h-3.5 text-indigo-400" /> Kode Unik File / Folder <span className="text-rose-400">*</span>
+              <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Key className="w-3.5 h-3.5 text-indigo-400" /> Kode Unik Akses <span className="text-rose-400">*</span>
+                </span>
+                {loadingInfo && <RefreshCw className="w-3.5 h-3.5 text-indigo-400 animate-spin" />}
               </label>
               <input
                 type="text"
-                placeholder="Contoh: 8F2A9B1C"
+                placeholder="Contoh: MYCODE123"
                 value={uniqueCode}
-                onChange={(e) => setUniqueCode(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 focus:border-indigo-500 text-white font-mono placeholder:font-sans placeholder:text-slate-600 text-sm focus:outline-none uppercase"
+                onChange={handleCodeChange}
+                className="w-full px-4 py-3 rounded-2xl bg-slate-900 border border-slate-800 focus:border-indigo-500 text-indigo-300 font-mono font-bold tracking-wider placeholder:font-sans placeholder:text-slate-600 text-base focus:outline-none uppercase"
               />
             </div>
 
+            {/* Error Pre-fetch Status */}
+            {infoError && (
+              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-400 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                <span>{infoError}</span>
+              </div>
+            )}
+
+            {/* Info Pre-Fetch Card (Hanya Nama File & Ukuran) */}
+            {shareInfo && (
+              <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3 animate-fadeIn">
+                <div className="flex items-center space-x-3 overflow-hidden">
+                  <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex-shrink-0">
+                    {shareInfo.type === 'folder' ? <Folder className="w-5 h-5 text-indigo-400" /> : <FileText className="w-5 h-5 text-purple-400" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-sm font-bold text-white truncate" title={shareInfo.name}>
+                      {shareInfo.name}
+                    </h4>
+                    <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
+                      <span>{shareInfo.type === 'folder' ? 'Folder ZIP' : 'File Single'}</span>
+                      <span>•</span>
+                      <span className="font-semibold text-indigo-300">{formatBytes(shareInfo.fileSize)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Status Badges */}
+                <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                  <span className="text-slate-400 text-[11px]">Kebijakan Unduh:</span>
+                  {!shareInfo.isActive ? (
+                    <span className="text-rose-400 font-semibold text-[11px] bg-rose-500/10 px-2.5 py-0.5 rounded-full border border-rose-500/20">
+                      🔒 Link Nonaktif / Kadaluarsa
+                    </span>
+                  ) : !shareInfo.allowDownload ? (
+                    <span className="text-amber-300 font-semibold text-[11px] bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                      🔒 Unduhan Dilarang oleh Pemilik
+                    </span>
+                  ) : (
+                    <span className="text-emerald-400 font-semibold text-[11px] bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Siap Diunduh
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Input Email (Opsional) */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
@@ -149,33 +323,86 @@ export const AccessFile: React.FC = () => {
               </label>
               <input
                 type="email"
-                placeholder="nama@email.com (biarkan kosong untuk Anonim)"
+                placeholder="nama@email.com (Kosongkan jika ingin Anonim)"
                 value={accessorEmail}
                 onChange={(e) => setAccessorEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 focus:border-indigo-500 text-white placeholder:text-slate-600 text-sm focus:outline-none"
+                className="w-full px-4 py-3 rounded-2xl bg-slate-900 border border-slate-800 focus:border-indigo-500 text-white placeholder:text-slate-600 text-sm focus:outline-none"
               />
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 text-slate-400 text-[11px] flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-              <span>Jika email dikosongkan, nama pengunduh akan otomatis dicatat sebagai <strong>Anonim</strong>.</span>
-            </div>
+            {/* Streaming Download Progress Widget */}
+            {downloading && (
+              <div className="p-4 rounded-2xl bg-slate-900 border border-indigo-500/30 space-y-2.5 animate-fadeIn">
+                <div className="flex items-center justify-between text-xs font-semibold">
+                  <span className="text-indigo-300 flex items-center gap-1.5">
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-indigo-400" />
+                    <span>Memproses Streaming Unduhan...</span>
+                  </span>
+                  <span className="text-purple-300 font-mono">{downloadProgress}%</span>
+                </div>
 
+                <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                  <div
+                    className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-200"
+                    style={{ width: `${downloadProgress}%` }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                  <span>
+                    {formatBytes(loadedBytes)} {totalBytes > 0 ? `/ ${formatBytes(totalBytes)}` : ''}
+                  </span>
+                  {downloadSpeed && <span className="text-emerald-400 font-bold">{downloadSpeed}</span>}
+                </div>
+              </div>
+            )}
+
+            {/* Tombol Unduh */}
             <button
               type="submit"
-              disabled={downloading}
-              className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition flex items-center justify-center gap-2"
+              disabled={downloading || (shareInfo !== null && (!shareInfo.allowDownload || !shareInfo.isActive))}
+              className="w-full py-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold text-sm shadow-xl shadow-indigo-600/30 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {downloading ? (
-                <span>Memproses Unduhan...</span>
+                <span>Mengunduh Data File...</span>
+              ) : shareInfo && !shareInfo.allowDownload ? (
+                <span>🔒 Pengunduhan Dinonaktifkan oleh Pemilik</span>
               ) : (
                 <>
                   <Download className="w-4 h-4" />
-                  <span>Verifikasi & Unduh</span>
+                  <span>Verifikasi & Unduh File</span>
                 </>
               )}
             </button>
           </form>
+
+          {/* CTA Banner Google OAuth Login */}
+          <div className="p-5 rounded-2xl bg-gradient-to-r from-indigo-950/60 to-purple-950/60 border border-indigo-500/30 text-center space-y-3 shadow-xl">
+            <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-indigo-300">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span>Sering Membagikan File Terproteksi?</span>
+            </div>
+            <p className="text-[11px] text-slate-400">
+              Dapatkan kuota cloud storage <strong>10 GB Gratis</strong> untuk menyimpan & membagikan file pribadi Anda secara terenkripsi.
+            </p>
+
+            {authError && (
+              <p className="text-xs text-rose-400 font-semibold">{authError}</p>
+            )}
+
+            <div className="flex flex-col items-center justify-center gap-2.5 pt-1">
+              <div className="bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800 shadow-md flex items-center justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setAuthError('Login Google gagal atau dibatalkan')}
+                  theme="filled_blue"
+                  shape="pill"
+                  size="medium"
+                  text="continue_with"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </main>
 

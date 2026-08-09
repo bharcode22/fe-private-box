@@ -83,25 +83,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <User className="w-4 h-4 text-indigo-400" />
                 <span className="hidden sm:inline">Akun Saya</span>
               </Link>
-              {onLogout && (
-                <button
-                  onClick={onLogout}
-                  className="p-2 sm:p-2.5 rounded-xl border border-slate-800 hover:border-red-500/40 hover:bg-red-950/30 text-slate-400 hover:text-red-400 transition cursor-pointer active:scale-95"
-                  title="Keluar"
-                >
-                  <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
-              )}
             </>
           ) : (
-            showShareButton && (
-              <Link
-                to="/share"
-                className="text-xs sm:text-sm font-medium text-slate-300 hover:text-white px-3 sm:px-4 py-2 rounded-lg border border-slate-800 hover:border-slate-700 transition flex items-center gap-1.5 sm:gap-2"
-              >
-                <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-400" /> Unduh via Kode
-              </Link>
-            )
+            <div className="flex items-center gap-2">
+              {showShareButton && (
+                <Link
+                  to="/share"
+                  className="text-xs sm:text-sm font-medium text-slate-300 hover:text-white px-3 sm:px-4 py-2 rounded-xl border border-slate-800 hover:border-slate-700 transition flex items-center gap-1.5 sm:gap-2"
+                >
+                  <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-400" /> Unduh Kode
+                </Link>
+              )}
+            </div>
           )}
         </div>
       </div>

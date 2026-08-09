@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Activity, Settings, Lock, CheckCircle, XCircle, Download, Eye, Users } from 'lucide-react';
+import { Activity, Settings, Lock, CheckCircle, XCircle, Download, Eye, Users, Trash2 } from 'lucide-react';
 import { ManageShareModal, ShareData } from './ManageShareModal';
 import { AccessDetailModal, AccessorLogItem } from './AccessDetailModal';
+import { ConfirmModal } from '../common/Popups';
+import api from '../../services/api';
 
 export interface GroupedLog {
   id: string;
@@ -46,6 +48,16 @@ export const AccessLogsTable: React.FC<AccessLogsTableProps> = ({ logs, onRefres
     accessors: [],
   });
 
+  const [deleteConfirmState, setDeleteConfirmState] = useState<{
+    isOpen: boolean;
+    shareId: string;
+    code: string;
+  }>({
+    isOpen: false,
+    shareId: '',
+    code: '',
+  });
+
   if (!logs || logs.length === 0) {
     return (
       <div className="p-12 text-center text-slate-500 space-y-2">
@@ -73,11 +85,38 @@ export const AccessLogsTable: React.FC<AccessLogsTableProps> = ({ logs, onRefres
     });
   };
 
+  const promptDeleteShareLink = (shareId: string, code: string) => {
+    setDeleteConfirmState({
+      isOpen: true,
+      shareId,
+      code,
+    });
+  };
+
+  const handleConfirmDeleteShareLink = async () => {
+    const { shareId } = deleteConfirmState;
+    setDeleteConfirmState((prev) => ({ ...prev, isOpen: false }));
+    if (!shareId) return;
+
+    try {
+      await api.delete(`/api/share/${shareId}`);
+      if (onRefreshLogs) onRefreshLogs();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Gagal menghapus link pembagian');
+    }
+  };
+
+  const sortedLogs = [...logs].sort((a: any, b: any) => {
+    const timeA = new Date(a.lastAccessedAt || a.accessedAt || a.createdAt || 0).getTime();
+    const timeB = new Date(b.lastAccessedAt || b.accessedAt || b.createdAt || 0).getTime();
+    return timeB - timeA;
+  });
+
   return (
     <div>
       {/* Mobile Card List (< 768px) */}
       <div className="block md:hidden divide-y divide-slate-800/80">
-        {logs.map((log: any) => {
+        {sortedLogs.map((log: any) => {
           const fileName = log.fileName || log.file?.fileName || 'File';
           const code = log.uniqueCode || log.share?.uniqueCode || '-';
           const downloadCount = log.downloadCount ?? (log.accessors ? log.accessors.length : 0);
@@ -120,20 +159,29 @@ export const AccessLogsTable: React.FC<AccessLogsTableProps> = ({ logs, onRefres
               <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-800/60">
                 <button
                   onClick={() => handleOpenDetailModal(log)}
-                  className="inline-flex items-center px-2.5 py-1 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-all"
+                  className="inline-flex items-center px-2.5 py-1 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-all cursor-pointer"
                 >
                   <Eye className="w-3.5 h-3.5 mr-1 text-indigo-400" />
                   Detail ({downloadCount})
                 </button>
 
                 {log.share && (
-                  <button
-                    onClick={() => handleOpenManageModal(log.share, fileName)}
-                    className="inline-flex items-center px-2.5 py-1 text-xs font-semibold text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg transition-all"
-                  >
-                    <Settings className="w-3.5 h-3.5 mr-1" />
-                    Kelola Link
-                  </button>
+                  <>
+                    <button
+                      onClick={() => handleOpenManageModal(log.share, fileName)}
+                      className="inline-flex items-center px-2.5 py-1 text-xs font-semibold text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg transition-all cursor-pointer"
+                    >
+                      <Settings className="w-3.5 h-3.5 mr-1" />
+                      Kelola
+                    </button>
+                    <button
+                      onClick={() => promptDeleteShareLink(log.share.id, code)}
+                      className="inline-flex items-center p-1.5 text-xs font-semibold text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-lg transition-all cursor-pointer"
+                      title="Hapus Link & Cabut Izin Pengunduhan"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -150,11 +198,11 @@ export const AccessLogsTable: React.FC<AccessLogsTableProps> = ({ logs, onRefres
               <th className="px-6 py-4">Kode Akses</th>
               <th className="px-6 py-4 text-center">Total Unduhan</th>
               <th className="px-6 py-4 text-center">Status Link</th>
-              <th className="px-6 py-4 text-center">Aksi & Detail</th>
+              <th className="px-6 py-4 text-center">Aksi & Pengaturan</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60">
-            {logs.map((log: any) => {
+            {sortedLogs.map((log: any) => {
               const fileName = log.fileName || log.file?.fileName || 'File';
               const code = log.uniqueCode || log.share?.uniqueCode || '-';
               const downloadCount = log.downloadCount ?? (log.accessors ? log.accessors.length : 0);
@@ -181,11 +229,11 @@ export const AccessLogsTable: React.FC<AccessLogsTableProps> = ({ logs, onRefres
                             Nonaktif
                           </span>
                         ) : !log.share.allowDownload ? (
-                          <span className="inline-flex items-center text-xs text-amber-300 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20 font-medium">
+                          <span className="inline-flex items-center text-amber-300 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20 font-medium">
                             <Lock className="w-3.5 h-3.5 mr-1" /> Hanya Pratinjau
                           </span>
                         ) : (
-                          <span className="inline-flex items-center text-xs text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 font-medium">
+                          <span className="inline-flex items-center text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 font-medium">
                             <CheckCircle className="w-3.5 h-3.5 mr-1" /> Aktif
                           </span>
                         )}
@@ -202,18 +250,28 @@ export const AccessLogsTable: React.FC<AccessLogsTableProps> = ({ logs, onRefres
                         title="Lihat Daftar Email Pengunduh"
                       >
                         <Users className="w-3.5 h-3.5 mr-1.5 text-indigo-400" />
-                        Detail Akses ({downloadCount})
+                        Detail ({downloadCount})
                       </button>
 
                       {log.share && (
-                        <button
-                          onClick={() => handleOpenManageModal(log.share, fileName)}
-                          className="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg transition-all cursor-pointer"
-                          title="Kelola Pengaturan Link Akses Ini"
-                        >
-                          <Settings className="w-3.5 h-3.5 mr-1.5" />
-                          Kelola Link
-                        </button>
+                        <>
+                          <button
+                            onClick={() => handleOpenManageModal(log.share, fileName)}
+                            className="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg transition-all cursor-pointer"
+                            title="Kelola Pengaturan Link Akses Ini"
+                          >
+                            <Settings className="w-3.5 h-3.5 mr-1.5" />
+                            Kelola Link
+                          </button>
+                          <button
+                            onClick={() => promptDeleteShareLink(log.share.id, code)}
+                            className="inline-flex items-center px-2.5 py-1.5 text-xs font-semibold text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-lg transition-all cursor-pointer"
+                            title="Hapus Link & Cabut Semua Izin Pengunduhan"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 mr-1" />
+                            Hapus
+                          </button>
+                        </>
                       )}
                     </div>
                   </td>
@@ -243,6 +301,18 @@ export const AccessLogsTable: React.FC<AccessLogsTableProps> = ({ logs, onRefres
         downloadCount={detailModal.downloadCount}
         accessors={detailModal.accessors}
         onClose={() => setDetailModal((prev) => ({ ...prev, isOpen: false }))}
+      />
+
+      {/* Custom Confirmation Popup Dialog */}
+      <ConfirmModal
+        isOpen={deleteConfirmState.isOpen}
+        title="Hapus Link Pembagian"
+        message={`Apakah Anda yakin ingin menghapus link pembagian "${deleteConfirmState.code}"? Semua izin pengunduhan akan dicabut dan log pembagian akan dibersihkan.`}
+        confirmText="Ya, Hapus Link"
+        cancelText="Batal"
+        isDanger={true}
+        onConfirm={handleConfirmDeleteShareLink}
+        onCancel={() => setDeleteConfirmState((prev) => ({ ...prev, isOpen: false }))}
       />
     </div>
   );
