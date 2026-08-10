@@ -1,6 +1,72 @@
 import React, { useState, useRef, useEffect } from 'react';
 import api from '../services/api';
 
+// Maximum retry attempts per chunk before giving up
+const MAX_CHUNK_RETRIES = 3;
+// Timeout per-chunk request in milliseconds (60 seconds)
+const CHUNK_TIMEOUT_MS = 60_000;
+// Chunk size: 5MB — optimal untuk Cloudflare Tunnel & Google Drive Resumable API (kelipatan 256KB)
+const CHUNK_SIZE = 5 * 1024 * 1024;
+// Threshold untuk memaksa chunked upload (semua file > 2MB)
+const CHUNKED_THRESHOLD = 2 * 1024 * 1024;
+
+/**
+ * Upload satu chunk dengan retry otomatis (exponential backoff).
+ * Jika terjadi error jaringan atau 502/503/504, coba ulang sampai MAX_CHUNK_RETRIES kali.
+ */
+async function uploadChunkWithRetry(
+  chunkFormData: FormData,
+  signal: AbortSignal,
+  onProgress: (loaded: number, total: number) => void
+): Promise<void> {
+  let lastError: any;
+
+  for (let attempt = 0; attempt < MAX_CHUNK_RETRIES; attempt++) {
+    if (signal.aborted) throw new Error('Upload dibatalkan.');
+
+    try {
+      const chunkAbort = new AbortController();
+      const timeoutId = setTimeout(() => chunkAbort.abort(), CHUNK_TIMEOUT_MS);
+      signal.addEventListener('abort', () => chunkAbort.abort(), { once: true });
+
+      await api.post('/api/files/upload-chunk', chunkFormData, {
+        signal: chunkAbort.signal,
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            onProgress(progressEvent.loaded, progressEvent.total);
+          }
+        },
+      });
+
+      clearTimeout(timeoutId);
+      return; // Berhasil, keluar dari retry loop
+    } catch (err: any) {
+      if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED' || signal.aborted) {
+        throw err;
+      }
+
+      lastError = err;
+      const isRetryable =
+        !err.response ||
+        err.response.status === 502 ||
+        err.response.status === 503 ||
+        err.response.status === 504 ||
+        err.response.status === 408;
+
+      if (!isRetryable || attempt >= MAX_CHUNK_RETRIES - 1) {
+        throw err;
+      }
+
+      const backoffMs = Math.pow(2, attempt) * 1000;
+      console.warn(`[Upload] Chunk gagal (attempt ${attempt + 1}/${MAX_CHUNK_RETRIES}), retry dalam ${backoffMs}ms...`, err.message);
+      await new Promise((r) => setTimeout(r, backoffMs));
+    }
+  }
+
+  throw lastError;
+}
+
 export const useFileUpload = () => {
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -17,7 +83,6 @@ export const useFileUpload = () => {
   const abortControllerRef = useRef<AbortController | null>(null);
   const sseRef = useRef<EventSource | null>(null);
 
-  // Smooth Interpolation Stepper for progress bar
   useEffect(() => {
     if (!uploading) {
       setUploadProgress(0);
@@ -82,7 +147,6 @@ export const useFileUpload = () => {
       formData.append('folderId', currentFolder.id);
     }
 
-    // Immediately close modal so user can work in background
     onCloseModal();
 
     setUploading(true);
@@ -120,8 +184,6 @@ export const useFileUpload = () => {
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
-    const CHUNK_SIZE = 15 * 1024 * 1024; // 15MB per chunk (always under 100MB Cloudflare limit)
-
     try {
       for (let fIndex = 0; fIndex < count; fIndex++) {
         const file = selectedFiles[fIndex];
@@ -133,8 +195,14 @@ export const useFileUpload = () => {
         setCurrentFileName(file.name);
         setFileProgressPercent(0);
 
-        if (totalChunks <= 1 && count === 1) {
-          // Standard upload for single small file <= 15MB
+        const nameLower = file.name.toLowerCase();
+        const isVideo = file.type?.startsWith('video/') ||
+          ['.mov', '.mp4', '.webm', '.mkv', '.avi', '.wmv', '.flv', '.3gp', '.m4v', '.ts', '.mts'].some(
+            (ext) => nameLower.endsWith(ext)
+          );
+        const useChunkedUpload = file.size > CHUNKED_THRESHOLD || isVideo || count > 1;
+
+        if (!useChunkedUpload) {
           const singleFormData = new FormData();
           singleFormData.append('files', file);
           singleFormData.append('relativePaths', relPath);
@@ -148,11 +216,14 @@ export const useFileUpload = () => {
               if (progressEvent.total) {
                 const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
                 setActualProgress(percentCompleted);
+                setFileProgressPercent(percentCompleted);
+                setStatusMessage(`Mengunggah ${file.name} (${percentCompleted}%)`);
               }
             },
           });
         } else {
-          // Chunked Upload for large files or multiple files
+          setStatusMessage(`Menyiapkan sesi pengunggahan bertahap untuk ${file.name}...`);
+
           const initRes = await api.post(
             '/api/files/upload-chunk/init',
             {
@@ -183,26 +254,23 @@ export const useFileUpload = () => {
             chunkFormData.append('totalChunks', totalChunks.toString());
             chunkFormData.append('chunk', chunkBlob, file.name);
 
-            await api.post('/api/files/upload-chunk', chunkFormData, {
-              signal: controller.signal,
-              headers: { 'Content-Type': 'multipart/form-data' },
-              onUploadProgress: (progressEvent) => {
-                if (progressEvent.total) {
-                  const chunkFraction = progressEvent.loaded / progressEvent.total;
-                  const fileProgress = Math.min(99, Math.round(((cIndex + chunkFraction) / totalChunks) * 100));
-                  setFileProgressPercent(fileProgress);
+            await uploadChunkWithRetry(
+              chunkFormData,
+              controller.signal,
+              (loaded, total) => {
+                const chunkFraction = loaded / total;
+                const fileProgress = Math.min(99, Math.round(((cIndex + chunkFraction) / totalChunks) * 100));
+                setFileProgressPercent(fileProgress);
 
-                  const overallProgress = Math.min(99, Math.round(
-                    ((fIndex + (cIndex + chunkFraction) / totalChunks) / count) * 100
-                  ));
-                  setActualProgress(overallProgress);
-                  setUploadProgress(overallProgress);
-                  setStatusMessage(`Mengunggah ${file.name} (${fileProgress}%)`);
-                }
-              },
-            });
+                const overallProgress = Math.min(99, Math.round(
+                  ((fIndex + (cIndex + chunkFraction) / totalChunks) / count) * 100
+                ));
+                setActualProgress(overallProgress);
+                setUploadProgress(overallProgress);
+                setStatusMessage(`Mengunggah ${file.name} — potongan ${cIndex + 1}/${totalChunks} (${fileProgress}%)`);
+              }
+            );
 
-            // Calculate final progress for completed chunk
             const completedFileProgress = Math.round(((cIndex + 1) / totalChunks) * 100);
             setFileProgressPercent(completedFileProgress);
 
@@ -213,7 +281,6 @@ export const useFileUpload = () => {
             setUploadProgress(completedOverallProgress);
           }
 
-          // Trigger Complete Chunk Upload (Merge & GDrive Upload)
           await api.post(
             '/api/files/upload-chunk/complete',
             { uploadId, jobId: uploadJobId },
@@ -222,7 +289,6 @@ export const useFileUpload = () => {
         }
       }
 
-      // Complete to 100% smoothly and hold for 450ms
       setUploadProgress(100);
       await new Promise((r) => setTimeout(r, 450));
 
@@ -234,9 +300,9 @@ export const useFileUpload = () => {
         return;
       }
       if (err.response?.status === 413) {
-        onShowToast('Ukuran request terlalu besar (Status 413). Pengunggahan telah dipecah menjadi potongan 15 MB.', 'error');
+        onShowToast('Ukuran request terlalu besar. Coba pilih file yang lebih kecil.', 'error');
       } else {
-        onShowToast(err.response?.data?.error || 'Gagal mengunggah file', 'error');
+        onShowToast(err.response?.data?.error || err.message || 'Gagal mengunggah file', 'error');
       }
     } finally {
       if (sseRef.current) {
