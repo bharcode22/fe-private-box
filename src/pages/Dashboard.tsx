@@ -7,13 +7,13 @@ import { UploadFileModal } from '../components/dashboard/UploadFileModal';
 import { BackgroundUploadWidget } from '../components/dashboard/BackgroundUploadWidget';
 import { BackgroundDeleteWidget } from '../components/dashboard/BackgroundDeleteWidget';
 import { TableSkeleton } from '../components/common/SkeletonLoader';
-import { FileListTable, FileItem, FolderItem } from '../components/dashboard/FileListTable';
+import { FileListTable } from '../components/dashboard/FileListTable';
 import { FileListToolbar } from '../components/dashboard/FileListToolbar';
 import { CreateFolderModal } from '../components/dashboard/FolderModals';
-import { AccessLogsTable, AccessLog } from '../components/dashboard/AccessLogsTable';
+import { AccessLogsTable } from '../components/dashboard/AccessLogsTable';
 import { ShareModal } from '../components/dashboard/ShareModal';
 import { FilePreviewModal } from '../components/dashboard/FilePreviewModal';
-import { ToastContainer, ConfirmModal, PromptModal, ToastMessage } from '../components/common/Popups';
+import { ToastContainer, ConfirmModal, PromptModal } from '../components/common/Popups';
 import { formatBytes } from '../utils/formatters';
 import { getDaysRemaining } from '../utils/dateUtils';
 import { downloadService } from '../services/downloadService';
@@ -22,6 +22,9 @@ import { useFileUpload } from '../hooks/useFileUpload';
 import { MobileFAB } from '../components/dashboard/MobileFAB';
 import { FileActionBottomSheet } from '../components/dashboard/FileActionBottomSheet';
 import { MobileBottomNav } from '../components/layout/MobileBottomNav';
+import type { FileItem, FolderItem, AccessLog, ToastMessage } from '../types';
+import { getStoredUser, getToken, clearAuth, getViewMode, setViewMode as setStoredViewMode } from '../utils/auth';
+import { FREE_QUOTA_BYTES } from '../constants/config';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -48,9 +51,7 @@ export const Dashboard: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   // View Mode & Selection States
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>(() => {
-    return (localStorage.getItem('pb_view_mode') as 'table' | 'grid') || 'table';
-  });
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>(getViewMode);
   const [isSelectionMode, setIsSelectionMode] = useState<boolean>(false);
   const [selectedFolderIds, setSelectedFolderIds] = useState<string[]>([]);
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
@@ -245,15 +246,15 @@ export const Dashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('pb_user');
-    const token = localStorage.getItem('pb_token');
+    const savedUser = getStoredUser();
+    const token = getToken();
 
     if (!savedUser || !token) {
       navigate('/');
       return;
     }
 
-    setUser(JSON.parse(savedUser));
+    setUser(savedUser);
   }, [navigate]);
 
   const fetchDashboardData = async (isManual = false) => {
@@ -342,8 +343,7 @@ export const Dashboard: React.FC = () => {
   }, [user, currentFolderId, searchQuery, selectedCategory]);
 
   const handleLogout = () => {
-    localStorage.removeItem('pb_token');
-    localStorage.removeItem('pb_user');
+    clearAuth();
     navigate('/');
   };
 
@@ -408,7 +408,7 @@ export const Dashboard: React.FC = () => {
   };
 
   const usedBytes = Number(userInfo?.storageUsed || 0);
-  const limitBytes = Math.max(Number(userInfo?.storageLimit || 0), Number(import.meta.env.VITE_FREE_USER_QUOTA_BYTES || 21474836480));
+  const limitBytes = Math.max(Number(userInfo?.storageLimit || 0), FREE_QUOTA_BYTES);
   const quotaPercent = Math.min(100, (usedBytes / limitBytes) * 100);
   const daysLeft = getDaysRemaining(userInfo?.expiresAt);
 

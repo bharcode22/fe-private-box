@@ -9,6 +9,8 @@ import { Footer } from '../components/layout/Footer';
 import { MobileBottomNav } from '../components/layout/MobileBottomNav';
 import { formatBytes } from '../utils/formatters';
 import { getDaysRemaining } from '../utils/dateUtils';
+import { getStoredUser, getToken, clearAuth, getLastSearch } from '../utils/auth';
+import { FREE_QUOTA_BYTES } from '../constants/config';
 
 export const Account: React.FC = () => {
   const navigate = useNavigate();
@@ -24,15 +26,15 @@ export const Account: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('pb_user');
-    const token = localStorage.getItem('pb_token');
+    const savedUser = getStoredUser();
+    const token = getToken();
 
     if (!savedUser || !token) {
       navigate('/');
       return;
     }
 
-    setUser(JSON.parse(savedUser));
+    setUser(savedUser);
     fetchAccountData();
   }, [navigate]);
 
@@ -50,20 +52,19 @@ export const Account: React.FC = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('pb_token');
-    localStorage.removeItem('pb_user');
+    clearAuth();
     navigate('/', { replace: true });
   };
 
   const handleBack = () => {
     const stateFrom = location.state?.from;
-    const lastSearch = sessionStorage.getItem('pb_last_dashboard_search') || '';
+    const lastSearch = getLastSearch() || sessionStorage.getItem('pb_last_dashboard_search') || '';
     const returnUrl = stateFrom || `/dashboard${lastSearch}`;
     navigate(returnUrl);
   };
 
   const usedBytes = Number(userInfo?.storageUsed || 0);
-  const limitBytes = Math.max(Number(userInfo?.storageLimit || 0), Number(import.meta.env.VITE_FREE_USER_QUOTA_BYTES || 21474836480));
+  const limitBytes = Math.max(Number(userInfo?.storageLimit || 0), FREE_QUOTA_BYTES);
   const quotaPercent = Math.min(100, (usedBytes / limitBytes) * 100);
   const daysLeft = getDaysRemaining(userInfo?.expiresAt);
 

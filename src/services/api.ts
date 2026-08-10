@@ -1,7 +1,5 @@
 import axios from 'axios';
-
-// Base URL diprioritaskan dari .env VITE_API_BASE_URL, fallback ke relative url (Vite proxy)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+import { API_BASE_URL } from '../constants/config';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,

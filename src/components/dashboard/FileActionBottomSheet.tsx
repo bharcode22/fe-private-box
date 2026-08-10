@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Download, Share2, Edit2, Trash2, Eye, Folder, FileText, HardDrive, Calendar, CheckCircle, XCircle } from 'lucide-react';
-import { FileItem, FolderItem } from './FileListTable';
+import type { FileItem, FolderItem } from '../../types';
 
 interface FileActionBottomSheetProps {
   isOpen: boolean;

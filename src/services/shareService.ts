@@ -1,15 +1,9 @@
 import api from './api';
 
-export interface ShareModalData {
-  id: string;
-  shareId?: string;
-  name: string;
-  type: 'file' | 'folder';
-  code?: string;
-  isActive?: boolean;
-  allowDownload?: boolean;
-  expiresAt?: string | null;
-}
+// Tipe ShareModalData dikelola di types/index.ts
+export type { ShareModalData } from '../types';
+import type { ShareModalData } from '../types';
+
 
 export const shareService = {
   /**

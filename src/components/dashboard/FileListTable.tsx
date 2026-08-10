@@ -3,24 +3,9 @@ import { FileText, Share2, Download, Image, Video, Music, FileQuestion, Trash2, 
 import api from '../../services/api';
 import { FileListToolbar } from './FileListToolbar';
 
-export interface FolderItem {
-  id: string;
-  name: string;
-  createdAt: string;
-  parentId: string | null;
-  shares?: { uniqueCode: string; isActive: boolean }[];
-}
-
-export interface FileItem {
-  id: string;
-  fileName: string;
-  fileSize: string;
-  storageAccountId: string;
-  createdAt: string;
-  category?: string;
-  mimeType?: string;
-  shares?: { uniqueCode: string; isActive: boolean }[];
-}
+// Tipe domain dikelola di types/index.ts. Re-export di sini untuk backward compatibility.
+export type { FileItem, FolderItem } from '../../types';
+import type { FileItem, FolderItem } from '../../types';
 
 interface FileListTableProps {
   folders: FolderItem[];

@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { AlertTriangle, Edit3, Trash2, CheckCircle2, XCircle, Info, X } from 'lucide-react';
 
-// Toast Notification Types & Component
-export interface ToastMessage {
-  id: string;
-  type: 'success' | 'error' | 'info';
-  message: string;
-}
+// Tipe domain dikelola di types/index.ts. Re-export di sini untuk backward compatibility.
+export type { ToastMessage } from '../../types';
+import type { ToastMessage } from '../../types';
+
 
 export const ToastContainer: React.FC<{
   toasts: ToastMessage[];

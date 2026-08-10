@@ -4,13 +4,10 @@ import { X, Settings, Key, Download, ToggleLeft, ToggleRight, Calendar, Save, Ch
 import api from '../../services/api';
 import { ConfirmModal } from '../common/Popups';
 
-export interface ShareData {
-  id: string;
-  uniqueCode: string;
-  allowDownload: boolean;
-  isActive: boolean;
-  expiresAt: string | null;
-}
+// Tipe domain dikelola di types/index.ts. Re-export di sini untuk backward compatibility.
+export type { ShareData } from '../../types';
+import type { ShareData } from '../../types';
+
 
 interface ManageShareModalProps {
   isOpen: boolean;

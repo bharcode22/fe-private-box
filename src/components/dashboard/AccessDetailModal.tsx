@@ -2,11 +2,10 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { X, Users, Key, Download, Clock, UserCheck, ShieldCheck } from 'lucide-react';
 
-export interface AccessorLogItem {
-  id: string;
-  accessorEmail: string;
-  accessedAt: string;
-}
+// Tipe domain dikelola di types/index.ts. Re-export di sini untuk backward compatibility.
+export type { AccessorLogItem } from '../../types';
+import type { AccessorLogItem } from '../../types';
+
 
 interface AccessDetailModalProps {
   isOpen: boolean;

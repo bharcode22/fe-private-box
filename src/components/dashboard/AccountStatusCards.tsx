@@ -1,5 +1,6 @@
 import React from 'react';
 import { HardDrive, Clock, Shield } from 'lucide-react';
+import { FREE_ACTIVE_DAYS } from '../../constants/config';
 
 interface AccountStatusCardsProps {
   usedBytes: number;
@@ -52,7 +53,7 @@ export const AccountStatusCards: React.FC<AccountStatusCardsProps> = ({
         <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
           <div
             className="bg-gradient-to-r from-purple-500 to-pink-500 h-full transition-all duration-500"
-            style={{ width: `${Math.min(100, (daysLeft / Number(import.meta.env.VITE_FREE_USER_ACTIVE_DAYS || 150)) * 100)}%` }}
+            style={{ width: `${Math.min(100, (daysLeft / FREE_ACTIVE_DAYS) * 100)}%` }}
           ></div>
         </div>
         <p className="text-[11px] sm:text-xs text-slate-400">Masa aktif gratis sejak pendaftaran pertama.</p>

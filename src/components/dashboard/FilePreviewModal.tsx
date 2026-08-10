@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { X, Download, Share2, Eye, FileText, Music, AlertCircle, Loader2, Calendar, HardDrive, Tag, Repeat, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import api from '../../services/api';
-import { FileItem } from './FileListTable';
+import type { FileItem } from '../../types';
 
 interface FilePreviewModalProps {
   file: FileItem | null;

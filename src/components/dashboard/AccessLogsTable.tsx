@@ -1,23 +1,15 @@
 import React, { useState } from 'react';
 import { Activity, Settings, Lock, CheckCircle, XCircle, Download, Eye, Users, Trash2 } from 'lucide-react';
-import { ManageShareModal, ShareData } from './ManageShareModal';
-import { AccessDetailModal, AccessorLogItem } from './AccessDetailModal';
+import { ManageShareModal } from './ManageShareModal';
+import { AccessDetailModal } from './AccessDetailModal';
 import { ConfirmModal } from '../common/Popups';
 import api from '../../services/api';
+import type { ShareData, AccessorLogItem, GroupedLog } from '../../types';
 
-export interface GroupedLog {
-  id: string;
-  fileId: string;
-  fileName: string;
-  uniqueCode: string;
-  downloadCount: number;
-  lastAccessedAt: string;
-  file?: { id: string; fileName: string };
-  share?: ShareData | null;
-  accessors: AccessorLogItem[];
-}
+// Re-export untuk backward compatibility
+export type { GroupedLog, AccessLog } from '../../types';
+import type { AccessLog } from '../../types';
 
-export type AccessLog = GroupedLog;
 
 interface AccessLogsTableProps {
   logs: GroupedLog[];

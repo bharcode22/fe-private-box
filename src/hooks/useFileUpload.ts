@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import api from '../services/api';
+import { API_BASE_URL } from '../constants/config';
+import { getToken } from '../utils/auth';
 
 // Maximum retry attempts per chunk before giving up
 const MAX_CHUNK_RETRIES = 3;
@@ -159,9 +161,8 @@ export const useFileUpload = () => {
     const uploadJobId = 'job-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
     formData.append('jobId', uploadJobId);
 
-    const token = localStorage.getItem('pb_token');
-    const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
-    const sseUrl = `${apiBaseUrl}/api/files/upload-progress/${uploadJobId}?token=${token}`;
+    const token = getToken();
+    const sseUrl = `${API_BASE_URL}/api/files/upload-progress/${uploadJobId}?token=${token}`;
 
     try {
       const eventSource = new EventSource(sseUrl);

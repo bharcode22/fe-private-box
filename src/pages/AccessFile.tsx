@@ -4,6 +4,7 @@ import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { Download, Lock, Mail, Key, FileText, Folder, RefreshCw, AlertCircle, Sparkles, CheckCircle2, HardDrive, ArrowLeft } from 'lucide-react';
 import api from '../services/api';
 import { Footer } from '../components/layout/Footer';
+import { setToken, setStoredUser } from '../utils/auth';
 
 interface PublicShareInfo {
   type: 'file' | 'folder';
@@ -200,8 +201,8 @@ export const AccessFile: React.FC = () => {
         credential: credentialResponse.credential,
       });
       const data = res.data;
-      localStorage.setItem('pb_token', data.token);
-      localStorage.setItem('pb_user', JSON.stringify(data.user));
+      setToken(data.token);
+      setStoredUser(data.user);
 
       if (data.isNewUser) {
         navigate('/terms', { replace: true });

@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, HardDrive, Users, ArrowRight, Sparkles, AlertCircle, Smartphone, Clock, Download } from 'lucide-react';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import api from '../services/api';
-import { Header } from '../components/layout/Header';
+import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import appAndPlayImg from '../assets/appandplay.png';
+import { getToken, getStoredUser, setToken, setStoredUser } from '../utils/auth';
+import { MAX_FREE_USERS } from '../constants/config';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -20,8 +22,8 @@ export const Login: React.FC = () => {
   const [authError, setAuthError] = useState('');
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('pb_user');
-    const token = localStorage.getItem('pb_token');
+    const savedUser = getStoredUser();
+    const token = getToken();
 
     if (savedUser && token) {
       navigate('/dashboard', { replace: true });
@@ -37,9 +39,9 @@ export const Login: React.FC = () => {
       setSlotInfo(res.data);
     } catch (err) {
       setSlotInfo({
-        totalSlots: Number(import.meta.env.VITE_MAX_FREE_USERS || 100),
+        totalSlots: MAX_FREE_USERS,
         usedSlots: 0,
-        remainingSlots: Number(import.meta.env.VITE_MAX_FREE_USERS || 100),
+        remainingSlots: MAX_FREE_USERS,
         isFull: false,
       });
     } finally {
@@ -48,8 +50,8 @@ export const Login: React.FC = () => {
   };
 
   const handleAuthSuccess = (data: any) => {
-    localStorage.setItem('pb_token', data.token);
-    localStorage.setItem('pb_user', JSON.stringify(data.user));
+    setToken(data.token);
+    setStoredUser(data.user);
 
     if (data.isNewUser) {
       navigate('/terms', { replace: true });
@@ -89,7 +91,7 @@ export const Login: React.FC = () => {
       <div className="absolute top-1/2 -right-40 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl pointer-events-none"></div>
 
       {/* Navigation Header Component */}
-      <Header />
+      <Navbar showShareButton={true} />
 
       {/* Hero Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-16 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
