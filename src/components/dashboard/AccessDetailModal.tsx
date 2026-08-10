@@ -38,7 +38,7 @@ export const AccessDetailModal: React.FC<AccessDetailModalProps> = ({
             </div>
             <div className="min-w-0">
               <h3 className="text-base font-extrabold text-white truncate" title={fileName}>
-                Detail Pengunduh (Accessor)
+                Detail
               </h3>
               <p className="text-xs text-slate-400 truncate max-w-xs flex items-center gap-1 mt-0.5">
                 <span>Item:</span> <strong className="text-slate-200">{fileName}</strong>

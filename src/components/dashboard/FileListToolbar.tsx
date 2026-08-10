@@ -44,7 +44,7 @@ export const FileListToolbar: React.FC<FileListToolbarProps> = ({
               }`}
           >
             <CheckSquare className={`w-3.5 h-3.5 ${isSelectionMode ? 'text-indigo-400' : 'text-slate-400'}`} />
-            <span>{isSelectionMode ? 'Selesai Pilih' : 'Pilih Item'}</span>
+            <span>{isSelectionMode ? 'Selesai' : 'Pilih'}</span>
           </button>
 
           {/* Informasi Total Data di Path / Folder */}
@@ -64,28 +64,30 @@ export const FileListToolbar: React.FC<FileListToolbarProps> = ({
         </div>
 
         {/* View Mode Switcher on Mobile (aligned right on top row) */}
-        <div className="flex sm:hidden items-center p-0.5 rounded-xl bg-slate-950/80 border border-slate-800 shadow-inner">
+        <div className="flex sm:hidden items-center p-1 rounded-xl bg-slate-950/90 border border-slate-800/90 shadow-inner gap-0.5">
           <button
             type="button"
             onClick={() => onViewModeChange('table')}
-            className={`p-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${viewMode === 'table'
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer active:scale-95 ${viewMode === 'table'
               ? 'bg-indigo-600 text-white shadow-md'
               : 'text-slate-400 hover:text-slate-200'
               }`}
-            title="Tampilan Tabel"
+            title="Tampilan List/Tabel"
           >
             <List className="w-3.5 h-3.5" />
+            <span className="text-[11px]">List</span>
           </button>
           <button
             type="button"
             onClick={() => onViewModeChange('grid')}
-            className={`p-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${viewMode === 'grid'
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer active:scale-95 ${viewMode === 'grid'
               ? 'bg-indigo-600 text-white shadow-md'
               : 'text-slate-400 hover:text-slate-200'
               }`}
-            title="Tampilan Petak (Grid)"
+            title="Tampilan Grid/Petak"
           >
             <LayoutGrid className="w-3.5 h-3.5" />
+            <span className="text-[11px]">Grid</span>
           </button>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { Navbar } from '../components/layout/Navbar';
 import { AccountStatusCards } from '../components/dashboard/AccountStatusCards';
 import { CardSkeleton } from '../components/common/SkeletonLoader';
 import { Footer } from '../components/layout/Footer';
+import { MobileBottomNav } from '../components/layout/MobileBottomNav';
 import { formatBytes } from '../utils/formatters';
 import { getDaysRemaining } from '../utils/dateUtils';
 
@@ -67,7 +68,7 @@ export const Account: React.FC = () => {
   const daysLeft = getDaysRemaining(userInfo?.expiresAt);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between pt-[58px] sm:pt-[65px] relative overflow-x-hidden">
       {/* Background Accents */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -75,7 +76,7 @@ export const Account: React.FC = () => {
       <Navbar user={user} />
 
       {/* Main Account Content */}
-      <main className="max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 flex-1 space-y-6 sm:space-y-8">
+      <main className="max-w-5xl w-full mx-auto px-4 sm:px-6 pt-6 pb-24 sm:py-10 flex-1 space-y-6 sm:space-y-8">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
             <button
@@ -87,10 +88,9 @@ export const Account: React.FC = () => {
             </button>
             <div className="min-w-0">
               <h1 className="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2 truncate">
-                <User className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-400 flex-shrink-0" />
-                <span className="truncate">Informasi & Status Akun</span>
+                <User className="w-4 h-4 sm:w-6 sm:h-6 text-indigo-400 flex-shrink-0" />
+                <span className="truncate">Informasi Akun</span>
               </h1>
-              <p className="text-[11px] sm:text-xs text-slate-400 truncate">Detail lisensi, kuota penyimpanan, dan masa aktif akun Anda.</p>
             </div>
           </div>
 
@@ -120,15 +120,15 @@ export const Account: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 bg-slate-900/80 px-3.5 py-2 rounded-xl border border-slate-800/80 text-xs">
-            <span className="text-slate-400">Tipe Lisensi:</span>
-            <span className="font-bold text-indigo-400">Free Tier (20 GB / 5 Bulan)</span>
+          <div className="flex justify-center gap-2 bg-slate-900/80 px-3.5 py-2 rounded-xl border border-slate-800/80 text-xs">
+            <span className="text-slate-400">Temporary:</span>
+            <span className="font-bold text-indigo-400">(20 GB / 5 Bulan)</span>
           </div>
         </div>
 
         {/* Account Status Cards Component */}
         <div className="space-y-4">
-          <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
+          <h3 className="text-sm text-center font-bold text-slate-300 uppercase tracking-wider">
             Status Penyimpanan & Lisensi
           </h3>
           {loading ? (
@@ -159,6 +159,20 @@ export const Account: React.FC = () => {
 
       {/* Footer */}
       <Footer />
+
+      {/* Mobile Bottom Navigation Bar */}
+      <MobileBottomNav
+        activeTab="files"
+        onTabChange={(tab) => {
+          const lastSearch = sessionStorage.getItem('pb_last_dashboard_search') || '';
+          if (tab === 'logs') {
+            navigate('/dashboard?tab=logs');
+          } else {
+            navigate(`/dashboard${lastSearch}`);
+          }
+        }}
+        user={user}
+      />
     </div>
   );
 };

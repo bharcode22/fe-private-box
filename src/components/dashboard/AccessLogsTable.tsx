@@ -115,40 +115,48 @@ export const AccessLogsTable: React.FC<AccessLogsTableProps> = ({ logs, onRefres
   return (
     <div>
       {/* Mobile Card List (< 768px) */}
-      <div className="block md:hidden divide-y divide-slate-800/80">
+      <div className="block md:hidden space-y-3 p-1">
         {sortedLogs.map((log: any) => {
           const fileName = log.fileName || log.file?.fileName || 'File';
           const code = log.uniqueCode || log.share?.uniqueCode || '-';
           const downloadCount = log.downloadCount ?? (log.accessors ? log.accessors.length : 0);
 
           return (
-            <div key={log.id} className="p-4 hover:bg-slate-900/40 transition space-y-3">
-              <div className="flex items-start justify-between gap-2">
-                <h4 className="font-semibold text-sm text-white truncate max-w-[190px]" title={fileName}>
-                  {fileName}
-                </h4>
-                <span className="font-mono bg-slate-900 px-2 py-0.5 rounded text-[11px] border border-slate-700 text-purple-300 flex-shrink-0">
+            <div key={log.id} className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg hover:border-slate-700/80 transition space-y-3">
+              {/* Header: Title & Code Badge */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex-shrink-0">
+                    <Activity className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-bold text-sm text-white truncate flex-1" title={fileName}>
+                    {fileName}
+                  </h4>
+                </div>
+
+                <span className="font-mono bg-slate-950 px-2.5 py-1 rounded-lg text-xs border border-purple-500/30 text-purple-300 font-bold flex-shrink-0 shadow-inner">
                   {code}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between text-xs">
-                <span className="inline-flex items-center text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 font-medium">
-                  <Download className="w-3 h-3 mr-1 text-indigo-400" /> {downloadCount}x Diunduh
+              {/* Status Badges Row */}
+              <div className="flex items-center justify-between text-xs pt-0.5">
+                <span className="inline-flex items-center text-indigo-300 bg-indigo-500/10 px-2.5 py-1 rounded-xl border border-indigo-500/20 font-semibold">
+                  <Download className="w-3.5 h-3.5 mr-1 text-indigo-400" /> {downloadCount}x Diunduh
                 </span>
 
                 {log.share && (
-                  <div className="flex items-center gap-1.5 text-[11px]">
+                  <div className="flex items-center gap-1.5 text-xs">
                     {!log.share.isActive ? (
-                      <span className="inline-flex items-center text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 font-medium">
+                      <span className="inline-flex items-center text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-xl border border-rose-500/20 font-semibold">
                         Nonaktif
                       </span>
                     ) : !log.share.allowDownload ? (
-                      <span className="inline-flex items-center text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 font-medium">
-                        Hanya Pratinjau
+                      <span className="inline-flex items-center text-amber-300 bg-amber-500/10 px-2.5 py-1 rounded-xl border border-amber-500/20 font-semibold">
+                        Pratinjau
                       </span>
                     ) : (
-                      <span className="inline-flex items-center text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-medium">
+                      <span className="inline-flex items-center text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-xl border border-emerald-500/20 font-semibold">
                         Aktif
                       </span>
                     )}
@@ -156,32 +164,43 @@ export const AccessLogsTable: React.FC<AccessLogsTableProps> = ({ logs, onRefres
                 )}
               </div>
 
-              <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-800/60">
+              {/* Action Buttons Row (Balanced & Full Width Grid) */}
+              <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-slate-800/80">
                 <button
+                  type="button"
                   onClick={() => handleOpenDetailModal(log)}
-                  className="inline-flex items-center px-2.5 py-1 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-all cursor-pointer"
+                  className="w-full justify-center inline-flex items-center px-2 py-2 text-xs font-semibold text-slate-300 bg-slate-800/90 hover:bg-slate-700 border border-slate-700/80 rounded-xl transition cursor-pointer active:scale-95 shadow-sm"
+                  title="Lihat Detail Akses Email"
                 >
-                  <Eye className="w-3.5 h-3.5 mr-1 text-indigo-400" />
-                  Detail ({downloadCount})
+                  <Eye className="w-3.5 h-3.5 mr-1 text-indigo-400 flex-shrink-0" />
+                  <span className="truncate">Detail ({downloadCount})</span>
                 </button>
 
-                {log.share && (
+                {log.share ? (
                   <>
                     <button
+                      type="button"
                       onClick={() => handleOpenManageModal(log.share, fileName)}
-                      className="inline-flex items-center px-2.5 py-1 text-xs font-semibold text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg transition-all cursor-pointer"
+                      className="w-full justify-center inline-flex items-center px-2 py-2 text-xs font-semibold text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-xl transition cursor-pointer active:scale-95 shadow-sm"
+                      title="Kelola Pengaturan Link Akses"
                     >
-                      <Settings className="w-3.5 h-3.5 mr-1" />
-                      Kelola
+                      <Settings className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
+                      <span className="truncate">Kelola</span>
                     </button>
                     <button
+                      type="button"
                       onClick={() => promptDeleteShareLink(log.share.id, code)}
-                      className="inline-flex items-center p-1.5 text-xs font-semibold text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-lg transition-all cursor-pointer"
-                      title="Hapus Link & Cabut Izin Pengunduhan"
+                      className="w-full justify-center inline-flex items-center px-2 py-2 text-xs font-semibold text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded-xl transition cursor-pointer active:scale-95 shadow-sm"
+                      title="Hapus Link Akses"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
+                      <span className="truncate">Hapus</span>
                     </button>
                   </>
+                ) : (
+                  <div className="col-span-2 flex items-center justify-center text-xs text-slate-500 italic">
+                    Link Dihapus
+                  </div>
                 )}
               </div>
             </div>

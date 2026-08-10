@@ -462,7 +462,7 @@ export const FileListTable: React.FC<FileListTableProps> = ({
 
       {/* Grid View Layout (Tampilan Petak) */}
       {viewMode === 'grid' ? (
-        <div className="p-4 sm:p-6 space-y-6">
+        <div className="p-2 sm:p-6 space-y-5">
           {/* Folders Grid Section */}
           {folders.length > 0 && (
             <div>
@@ -518,45 +518,45 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                       )}
                     </div>
 
-                    <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-slate-800/60" onClick={(e) => e.stopPropagation()}>
+                    <div className="grid grid-cols-4 gap-2 w-full pt-2.5 border-t border-slate-800/60" onClick={(e) => e.stopPropagation()}>
                       {onDownloadFolder && (
                         <button
                           disabled={isSelectionMode}
                           onClick={() => onDownloadFolder(folder.id, folder.name)}
-                          className="p-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 transition disabled:opacity-40"
+                          className="w-full py-2 sm:py-2.5 rounded-xl bg-indigo-600/25 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 transition disabled:opacity-40 flex items-center justify-center active:scale-95 cursor-pointer shadow-sm"
                           title="Unduh Folder"
                         >
-                          <Download className="w-3.5 h-3.5" />
+                          <Download className="w-4 h-4" />
                         </button>
                       )}
                       {onGenerateFolderShareCode && (
                         <button
                           disabled={isSelectionMode}
                           onClick={() => onGenerateFolderShareCode(folder.id, folder.name, folder.shares)}
-                          className="p-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 transition disabled:opacity-40"
+                          className="w-full py-2 sm:py-2.5 rounded-xl bg-purple-600/25 hover:bg-purple-600/40 text-purple-300 border border-purple-500/30 transition disabled:opacity-40 flex items-center justify-center active:scale-95 cursor-pointer shadow-sm"
                           title="Bagikan Folder"
                         >
-                          <Share2 className="w-3.5 h-3.5" />
+                          <Share2 className="w-4 h-4" />
                         </button>
                       )}
                       {onRenameFolder && (
                         <button
                           disabled={isSelectionMode}
                           onClick={() => onRenameFolder(folder.id, folder.name)}
-                          className="p-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 transition disabled:opacity-40"
+                          className="w-full py-2 sm:py-2.5 rounded-xl bg-amber-600/25 hover:bg-amber-600/40 text-amber-300 border border-amber-500/30 transition disabled:opacity-40 flex items-center justify-center active:scale-95 cursor-pointer shadow-sm"
                           title="Ubah Nama"
                         >
-                          <Edit2 className="w-3.5 h-3.5" />
+                          <Edit2 className="w-4 h-4" />
                         </button>
                       )}
                       {onDeleteFolder && (
                         <button
                           disabled={isSelectionMode}
                           onClick={() => onDeleteFolder(folder.id, folder.name)}
-                          className="p-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 transition disabled:opacity-40"
+                          className="w-full py-2 sm:py-2.5 rounded-xl bg-rose-600/25 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 transition disabled:opacity-40 flex items-center justify-center active:scale-95 cursor-pointer shadow-sm"
                           title="Hapus"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       )}
                     </div>
@@ -630,42 +630,41 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                       </div>
 
                       {/* Actions Footer */}
-                      <div className="flex items-center justify-end gap-1.5 pt-2.5 border-t border-slate-800/60" onClick={(e) => e.stopPropagation()}>
-
+                      <div className="grid grid-cols-4 gap-2 w-full pt-2.5 border-t border-slate-800/60" onClick={(e) => e.stopPropagation()}>
                         <button
                           disabled={isSelectionMode}
                           onClick={() => onDownloadPrivate(file.id, file.fileName)}
-                          className="p-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition disabled:opacity-40 shadow-sm"
+                          className="w-full py-2 sm:py-2.5 rounded-xl bg-indigo-600/25 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 transition disabled:opacity-40 flex items-center justify-center active:scale-95 cursor-pointer shadow-sm"
                           title="Unduh File"
                         >
-                          <Download className="w-3.5 h-3.5" />
+                          <Download className="w-4 h-4" />
                         </button>
                         <button
                           disabled={isSelectionMode}
                           onClick={() => onGenerateShareCode(file.id, file.fileName, file.shares)}
-                          className="p-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 transition disabled:opacity-40"
+                          className="w-full py-2 sm:py-2.5 rounded-xl bg-purple-600/25 hover:bg-purple-600/40 text-purple-300 border border-purple-500/30 transition disabled:opacity-40 flex items-center justify-center active:scale-95 cursor-pointer shadow-sm"
                           title="Bagikan"
                         >
-                          <Share2 className="w-3.5 h-3.5" />
+                          <Share2 className="w-4 h-4" />
                         </button>
                         {onRenameFile && (
                           <button
                             disabled={isSelectionMode}
                             onClick={() => onRenameFile(file.id, file.fileName)}
-                            className="p-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 transition disabled:opacity-40"
+                            className="w-full py-2 sm:py-2.5 rounded-xl bg-amber-600/25 hover:bg-amber-600/40 text-amber-300 border border-amber-500/30 transition disabled:opacity-40 flex items-center justify-center active:scale-95 cursor-pointer shadow-sm"
                             title="Ubah Nama"
                           >
-                            <Edit2 className="w-3.5 h-3.5" />
+                            <Edit2 className="w-4 h-4" />
                           </button>
                         )}
                         {onDeleteFile && (
                           <button
                             disabled={isSelectionMode}
                             onClick={() => onDeleteFile(file.id, file.fileName)}
-                            className="p-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 transition disabled:opacity-40"
+                            className="w-full py-2 sm:py-2.5 rounded-xl bg-rose-600/25 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 transition disabled:opacity-40 flex items-center justify-center active:scale-95 cursor-pointer shadow-sm"
                             title="Hapus"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         )}
                       </div>

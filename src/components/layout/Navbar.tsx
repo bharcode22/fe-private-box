@@ -27,7 +27,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const dashboardLink = user ? `/dashboard${lastDashboardSearch}` : '/';
 
   return (
-    <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 relative overflow-hidden">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-md w-full">
       {/* Top Global Progress Bar (YouTube/GitHub Style for Upload / Delete) */}
       {(uploading || deleting) && (
         <div className="absolute top-0 left-0 right-0 h-1 bg-slate-900 overflow-hidden z-50">
@@ -78,7 +78,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 to="/account"
                 state={{ from: currentPathWithSearch }}
                 className="px-2.5 py-2 sm:px-3 rounded-xl border border-slate-800 hover:border-indigo-500/40 hover:bg-slate-900 text-slate-300 hover:text-indigo-400 transition flex items-center gap-1.5 text-xs font-semibold"
-                title="Informasi & Status Akun"
+                title="Informasi Akun"
               >
                 <User className="w-4 h-4 text-indigo-400" />
                 <span className="hidden sm:inline">Akun Saya</span>

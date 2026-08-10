@@ -437,7 +437,7 @@ export const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col pt-[58px] sm:pt-[65px]">
       {/* Navbar Header Component */}
       <Navbar
         user={user}
@@ -449,10 +449,10 @@ export const Dashboard: React.FC = () => {
       />
 
       {/* Main Dashboard Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-24 sm:py-8 flex-1 w-full space-y-6 sm:space-y-8">
+      <main className="max-w-7xl mx-auto px-2.5 sm:px-6 pt-3 pb-24 sm:py-8 flex-1 w-full space-y-5 sm:space-y-8">
         <div className="space-y-4">
           {/* Dashboard Tabs & Control Toolbar (Sticky Header on Scroll) */}
-          <div className="sticky top-[58px] sm:top-[65px] z-30 bg-slate-950/95 backdrop-blur-md pt-1.5 pb-2 sm:pt-2 sm:pb-3 space-y-2 sm:space-y-3 border-b border-slate-800/80 -mx-4 sm:-mx-6 px-4 sm:px-6 shadow-lg transition-all">
+          <div className="sticky top-[58px] sm:top-[65px] z-30 bg-slate-950/95 backdrop-blur-md pt-1.5 pb-2 sm:pt-2 sm:pb-3 space-y-2 sm:space-y-3 border-b border-slate-800/80 -mx-2.5 sm:-mx-6 px-2.5 sm:px-6 shadow-lg transition-all">
             <div className="hidden sm:flex border-b border-slate-800 space-x-4 sm:space-x-6 overflow-x-auto whitespace-nowrap">
               <button
                 onClick={() => setActiveTab('files')}

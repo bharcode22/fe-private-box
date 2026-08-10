@@ -186,16 +186,31 @@ export const useFileUpload = () => {
             await api.post('/api/files/upload-chunk', chunkFormData, {
               signal: controller.signal,
               headers: { 'Content-Type': 'multipart/form-data' },
+              onUploadProgress: (progressEvent) => {
+                if (progressEvent.total) {
+                  const chunkFraction = progressEvent.loaded / progressEvent.total;
+                  const fileProgress = Math.min(99, Math.round(((cIndex + chunkFraction) / totalChunks) * 100));
+                  setFileProgressPercent(fileProgress);
+
+                  const overallProgress = Math.min(99, Math.round(
+                    ((fIndex + (cIndex + chunkFraction) / totalChunks) / count) * 100
+                  ));
+                  setActualProgress(overallProgress);
+                  setUploadProgress(overallProgress);
+                  setStatusMessage(`Mengunggah ${file.name} (${fileProgress}%)`);
+                }
+              },
             });
 
-            // Calculate progress across all files and chunks
-            const fileProgress = Math.round(((cIndex + 1) / totalChunks) * 100);
-            setFileProgressPercent(fileProgress);
+            // Calculate final progress for completed chunk
+            const completedFileProgress = Math.round(((cIndex + 1) / totalChunks) * 100);
+            setFileProgressPercent(completedFileProgress);
 
-            const overallProgress = Math.round(
+            const completedOverallProgress = Math.round(
               ((fIndex + (cIndex + 1) / totalChunks) / count) * 100
             );
-            setActualProgress(overallProgress);
+            setActualProgress(completedOverallProgress);
+            setUploadProgress(completedOverallProgress);
           }
 
           // Trigger Complete Chunk Upload (Merge & GDrive Upload)
