@@ -14,4 +14,15 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Interceptor untuk menangkap error penolakan syarat & ketentuan
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.data?.requiresTerms || (error.response?.status === 403 && error.response?.data?.error?.includes('Syarat'))) {
+      window.dispatchEvent(new CustomEvent('pb:require-terms'));
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

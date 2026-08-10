@@ -7,6 +7,7 @@ import { AccountStatusCards } from '../components/dashboard/AccountStatusCards';
 import { CardSkeleton } from '../components/common/SkeletonLoader';
 import { Footer } from '../components/layout/Footer';
 import { MobileBottomNav } from '../components/layout/MobileBottomNav';
+import { TermsModal } from '../components/dashboard/TermsModal';
 import { formatBytes } from '../utils/formatters';
 import { getDaysRemaining } from '../utils/dateUtils';
 import { getStoredUser, getToken, clearAuth, getLastSearch } from '../utils/auth';
@@ -24,6 +25,7 @@ export const Account: React.FC = () => {
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
   useEffect(() => {
     const savedUser = getStoredUser();
@@ -35,7 +37,17 @@ export const Account: React.FC = () => {
     }
 
     setUser(savedUser);
+
+    if (!(savedUser as any).acceptedTermsAt) {
+      setIsTermsModalOpen(true);
+    }
+
+    const handleRequireTerms = () => setIsTermsModalOpen(true);
+    window.addEventListener('pb:require-terms', handleRequireTerms);
+
     fetchAccountData();
+
+    return () => window.removeEventListener('pb:require-terms', handleRequireTerms);
   }, [navigate]);
 
   const fetchAccountData = async (isManual = false) => {
@@ -173,6 +185,20 @@ export const Account: React.FC = () => {
           }
         }}
         user={user}
+      />
+
+      {/* Terms & Conditions Blocking Modal */}
+      <TermsModal
+        isOpen={isTermsModalOpen}
+        onSuccess={(updatedUser) => {
+          setIsTermsModalOpen(false);
+          if (updatedUser) setUser(updatedUser);
+          fetchAccountData();
+        }}
+        onCancel={() => {
+          clearAuth();
+          navigate('/');
+        }}
       />
     </div>
   );

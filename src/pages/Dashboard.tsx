@@ -14,6 +14,7 @@ import { AccessLogsTable } from '../components/dashboard/AccessLogsTable';
 import { ShareModal } from '../components/dashboard/ShareModal';
 import { FilePreviewModal } from '../components/dashboard/FilePreviewModal';
 import { ToastContainer, ConfirmModal, PromptModal } from '../components/common/Popups';
+import { TermsModal } from '../components/dashboard/TermsModal';
 import { formatBytes } from '../utils/formatters';
 import { getDaysRemaining } from '../utils/dateUtils';
 import { downloadService } from '../services/downloadService';
@@ -245,6 +246,8 @@ export const Dashboard: React.FC = () => {
     );
   };
 
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
+
   useEffect(() => {
     const savedUser = getStoredUser();
     const token = getToken();
@@ -255,6 +258,14 @@ export const Dashboard: React.FC = () => {
     }
 
     setUser(savedUser);
+
+    if (!(savedUser as any).acceptedTermsAt) {
+      setIsTermsModalOpen(true);
+    }
+
+    const handleRequireTerms = () => setIsTermsModalOpen(true);
+    window.addEventListener('pb:require-terms', handleRequireTerms);
+    return () => window.removeEventListener('pb:require-terms', handleRequireTerms);
   }, [navigate]);
 
   const fetchDashboardData = async (isManual = false) => {
@@ -306,6 +317,9 @@ export const Dashboard: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Fetch dashboard error:', err);
+      if (err.response?.data?.requiresTerms || err.response?.status === 403) {
+        setIsTermsModalOpen(true);
+      }
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -1008,11 +1022,18 @@ export const Dashboard: React.FC = () => {
         formatBytes={formatBytes}
       />
 
-      {/* Google Drive Mobile Bottom Navigation Bar */}
-      <MobileBottomNav
-        activeTab={activeTab}
-        onTabChange={(tab) => setActiveTab(tab)}
-        user={user}
+      {/* Terms & Conditions Blocking Modal */}
+      <TermsModal
+        isOpen={isTermsModalOpen}
+        onSuccess={(updatedUser) => {
+          setIsTermsModalOpen(false);
+          if (updatedUser) setUser(updatedUser);
+          fetchDashboardData();
+        }}
+        onCancel={() => {
+          clearAuth();
+          navigate('/');
+        }}
       />
     </div>
   );
