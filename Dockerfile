@@ -12,12 +12,12 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Accept Build Arguments for Vite Environment Variables
-ARG VITE_API_BASE_URL
-ARG VITE_GOOGLE_CLIENT_ID
-ARG VITE_MAX_FREE_USERS
-ARG VITE_FREE_USER_QUOTA_BYTES
-ARG VITE_FREE_USER_ACTIVE_DAYS
+# Accept Build Arguments for Vite Environment Variables with Default Values
+ARG VITE_API_BASE_URL=http://localhost:5003
+ARG VITE_GOOGLE_CLIENT_ID=1084639382013-kl0fqv71kk5975dtd6t43cqmmuj4t0bj.apps.googleusercontent.com
+ARG VITE_MAX_FREE_USERS=100
+ARG VITE_FREE_USER_QUOTA_BYTES=10737418240
+ARG VITE_FREE_USER_ACTIVE_DAYS=30
 
 # Export environment variables for Vite compiler
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
