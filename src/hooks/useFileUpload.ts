@@ -120,19 +120,92 @@ export const useFileUpload = () => {
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
+    const CHUNK_SIZE = 15 * 1024 * 1024; // 15MB per chunk (always under 100MB Cloudflare limit)
+
     try {
-      await api.post(`/api/files/upload?uploadJobId=${uploadJobId}`, formData, {
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setActualProgress(percentCompleted);
+      for (let fIndex = 0; fIndex < count; fIndex++) {
+        const file = selectedFiles[fIndex];
+        const relPath = (file as any).webkitRelativePath || file.name;
+        const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+        const fileNumber = fIndex + 1;
+
+        setCurrentFileIndex(fileNumber);
+        setCurrentFileName(file.name);
+        setFileProgressPercent(0);
+
+        if (totalChunks <= 1 && count === 1) {
+          // Standard upload for single small file <= 15MB
+          const singleFormData = new FormData();
+          singleFormData.append('files', file);
+          singleFormData.append('relativePaths', relPath);
+          if (currentFolder) singleFormData.append('folderId', currentFolder.id);
+          singleFormData.append('jobId', uploadJobId);
+
+          await api.post(`/api/files/upload?uploadJobId=${uploadJobId}`, singleFormData, {
+            signal: controller.signal,
+            headers: { 'Content-Type': 'multipart/form-data' },
+            onUploadProgress: (progressEvent) => {
+              if (progressEvent.total) {
+                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                setActualProgress(percentCompleted);
+              }
+            },
+          });
+        } else {
+          // Chunked Upload for large files or multiple files
+          const initRes = await api.post(
+            '/api/files/upload-chunk/init',
+            {
+              fileName: file.name,
+              fileSize: file.size,
+              mimeType: file.type || 'application/octet-stream',
+              folderId: currentFolder?.id || null,
+              totalChunks,
+              chunkSize: CHUNK_SIZE,
+              jobId: uploadJobId,
+              relativePath: relPath,
+            },
+            { signal: controller.signal }
+          );
+
+          const { uploadId } = initRes.data;
+
+          for (let cIndex = 0; cIndex < totalChunks; cIndex++) {
+            if (controller.signal.aborted) break;
+
+            const start = cIndex * CHUNK_SIZE;
+            const end = Math.min(file.size, (cIndex + 1) * CHUNK_SIZE);
+            const chunkBlob = file.slice(start, end);
+
+            const chunkFormData = new FormData();
+            chunkFormData.append('uploadId', uploadId);
+            chunkFormData.append('chunkIndex', cIndex.toString());
+            chunkFormData.append('totalChunks', totalChunks.toString());
+            chunkFormData.append('chunk', chunkBlob, file.name);
+
+            await api.post('/api/files/upload-chunk', chunkFormData, {
+              signal: controller.signal,
+              headers: { 'Content-Type': 'multipart/form-data' },
+            });
+
+            // Calculate progress across all files and chunks
+            const fileProgress = Math.round(((cIndex + 1) / totalChunks) * 100);
+            setFileProgressPercent(fileProgress);
+
+            const overallProgress = Math.round(
+              ((fIndex + (cIndex + 1) / totalChunks) / count) * 100
+            );
+            setActualProgress(overallProgress);
           }
-        },
-      });
+
+          // Trigger Complete Chunk Upload (Merge & GDrive Upload)
+          await api.post(
+            '/api/files/upload-chunk/complete',
+            { uploadId, jobId: uploadJobId },
+            { signal: controller.signal }
+          );
+        }
+      }
 
       // Complete to 100% smoothly and hold for 450ms
       setUploadProgress(100);
@@ -146,7 +219,7 @@ export const useFileUpload = () => {
         return;
       }
       if (err.response?.status === 413) {
-        onShowToast('Ukuran file/request terlalu besar (Status 413 Content Too Large). Batas maksimal Cloudflare Tunnel adalah 100 MB per pengunggahan.', 'error');
+        onShowToast('Ukuran request terlalu besar (Status 413). Pengunggahan telah dipecah menjadi potongan 15 MB.', 'error');
       } else {
         onShowToast(err.response?.data?.error || 'Gagal mengunggah file', 'error');
       }

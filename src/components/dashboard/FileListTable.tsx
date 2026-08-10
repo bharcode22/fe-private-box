@@ -55,6 +55,35 @@ interface FileListTableProps {
   showToolbar?: boolean;
 }
 
+export const getEffectiveCategory = (file: { fileName: string; category?: string; mimeType?: string }): string => {
+  const ext = file.fileName.substring(file.fileName.lastIndexOf('.')).toLowerCase();
+  const mime = file.mimeType || '';
+
+  if (file.category && file.category !== 'other') return file.category;
+
+  if (mime.startsWith('image/') || ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'].includes(ext)) {
+    return 'image';
+  }
+  if (mime.startsWith('video/') || ['.mp4', '.webm', '.ogg', '.mov', '.mkv', '.avi', '.wmv'].includes(ext)) {
+    return 'video';
+  }
+  if (mime.startsWith('audio/') || ['.mp3', '.wav', '.ogg', '.aac', '.m4a', '.flac', '.wma'].includes(ext)) {
+    return 'audio';
+  }
+  if (
+    mime.includes('pdf') ||
+    mime.includes('document') ||
+    mime.includes('text') ||
+    mime.includes('spreadsheet') ||
+    mime.includes('presentation') ||
+    ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.csv'].includes(ext)
+  ) {
+    return 'document';
+  }
+
+  return file.category || 'document';
+};
+
 // Helper to get distinct icon and color styles per category
 const getFileCategoryStyle = (category?: string) => {
   switch (category) {
@@ -102,7 +131,7 @@ const FileThumbnail: React.FC<{
   const [loading, setLoading] = useState<boolean>(!ThumbnailCache.has(file.id));
   const [failed, setFailed] = useState<boolean>(false);
 
-  const category = file.category || 'document';
+  const category = getEffectiveCategory(file);
   const ext = file.fileName.substring(file.fileName.lastIndexOf('.')).toLowerCase();
   const isImage = category === 'image' || file.mimeType?.startsWith('image/') || ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'].includes(ext);
   const isVideo = category === 'video' || file.mimeType?.startsWith('video/') || ['.mp4', '.webm', '.ogg', '.mov'].includes(ext);
@@ -543,7 +572,7 @@ export const FileListTable: React.FC<FileListTableProps> = ({
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {files.map((file) => {
-                  const { Icon, colorClass, textHoverClass } = getFileCategoryStyle(file.category);
+                  const { Icon, colorClass, textHoverClass } = getFileCategoryStyle(getEffectiveCategory(file));
 
                   return (
                     <div
@@ -741,7 +770,7 @@ export const FileListTable: React.FC<FileListTableProps> = ({
 
             {/* Files Mobile Cards */}
             {files.map((file) => {
-              const { Icon, colorClass, textHoverClass } = getFileCategoryStyle(file.category);
+              const { Icon, colorClass, textHoverClass } = getFileCategoryStyle(getEffectiveCategory(file));
 
               return (
                 <div
@@ -947,7 +976,7 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                   </tr>
                 ))}
                 {files.map((file) => {
-                  const { Icon, colorClass, textHoverClass } = getFileCategoryStyle(file.category);
+                  const { Icon, colorClass, textHoverClass } = getFileCategoryStyle(getEffectiveCategory(file));
 
                   return (
                     <tr
