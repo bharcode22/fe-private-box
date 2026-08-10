@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { FileText, Share2, Download, Image, Video, Music, FileQuestion, Trash2, Edit2, UploadCloud, FolderPlus, CheckSquare, Folder, LayoutGrid, List, Eye, Loader2, MoreVertical } from 'lucide-react';
 import api from '../../services/api';
 import { FileListToolbar } from './FileListToolbar';
+import { getViewMode, setViewMode as setStoredViewMode } from '../../utils/auth';
 
 // Tipe domain dikelola di types/index.ts. Re-export di sini untuk backward compatibility.
 export type { FileItem, FolderItem } from '../../types';
@@ -270,9 +271,7 @@ export const FileListTable: React.FC<FileListTableProps> = ({
   const [internalIsSelectionMode, setInternalIsSelectionMode] = useState<boolean>(false);
   const [internalSelectedFolderIds, setInternalSelectedFolderIds] = useState<string[]>([]);
   const [internalSelectedFileIds, setInternalSelectedFileIds] = useState<string[]>([]);
-  const [internalViewMode, setInternalViewMode] = useState<'table' | 'grid'>(() => {
-    return (localStorage.getItem('pb_view_mode') as 'table' | 'grid') || 'table';
-  });
+  const [internalViewMode, setInternalViewMode] = useState<'table' | 'grid'>(getViewMode);
 
   const isSelectionMode = controlledIsSelectionMode ?? internalIsSelectionMode;
   const setIsSelectionMode = (val: boolean) => {
@@ -307,7 +306,7 @@ export const FileListTable: React.FC<FileListTableProps> = ({
   const observerTargetRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    localStorage.setItem('pb_view_mode', viewMode);
+    setStoredViewMode(viewMode);
   }, [viewMode]);
 
   useEffect(() => {

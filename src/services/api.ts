@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../constants/config';
+import { getToken } from '../utils/auth';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -7,7 +8,7 @@ export const api = axios.create({
 
 // Interceptor untuk menyisipkan Token JWT secara otomatis
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('pb_token');
+  const token = getToken();
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }

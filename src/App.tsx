@@ -2,12 +2,11 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Login } from './pages/Login';
-import { Terms } from './pages/Terms';
 import { Dashboard } from './pages/Dashboard';
 import { Account } from './pages/Account';
 import { AccessFile } from './pages/AccessFile';
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
+import { GOOGLE_CLIENT_ID } from './constants/config';
 
 export const App: React.FC = () => {
   return (
@@ -15,7 +14,6 @@ export const App: React.FC = () => {
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           <Route path="/" element={<Login />} />
-          <Route path="/terms" element={<Terms />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/account" element={<Account />} />
           <Route path="/share" element={<AccessFile />} />

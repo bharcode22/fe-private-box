@@ -65,7 +65,7 @@ export const Dashboard: React.FC = () => {
   } | null>(null);
 
   useEffect(() => {
-    localStorage.setItem('pb_view_mode', viewMode);
+    setStoredViewMode(viewMode);
   }, [viewMode]);
 
   const totalDashboardItems = folders.length + files.length;
@@ -1020,6 +1020,20 @@ export const Dashboard: React.FC = () => {
           });
         }}
         formatBytes={formatBytes}
+      />
+
+      {/* Mobile Bottom Navigation Bar */}
+      <MobileBottomNav
+        activeTab={activeTab}
+        onTabChange={(tab) => {
+          if (tab === 'logs') {
+            setSearchParams({ tab: 'logs' });
+          } else {
+            const currentParams = Object.fromEntries(searchParams.entries());
+            delete currentParams.tab;
+            setSearchParams(currentParams);
+          }
+        }}
       />
 
       {/* Terms & Conditions Blocking Modal */}

@@ -27,7 +27,7 @@ const renderMarkdown = (text: string) => {
   const flushList = () => {
     if (listItems.length > 0) {
       elements.push(
-        <ul key={`ul-${elements.length}`} className="list-disc pl-5 space-y-2 text-slate-300 my-2">
+        <ul key={`ul-${elements.length}`} className="list-disc pl-4 sm:pl-5 space-y-1.5 text-slate-300 my-2">
           {listItems}
         </ul>
       );
@@ -55,43 +55,43 @@ const renderMarkdown = (text: string) => {
     if (trimmed.startsWith('# ')) {
       flushList();
       elements.push(
-        <h1 key={index} className="text-base sm:text-lg font-black text-white mt-3 mb-2 border-b border-slate-800 pb-1.5">
+        <h1 key={index} className="text-sm sm:text-lg font-black text-white mt-2.5 mb-1.5 border-b border-slate-800 pb-1.5 break-words">
           {parseInline(trimmed.slice(2))}
         </h1>
       );
     } else if (trimmed.startsWith('## ')) {
       flushList();
       elements.push(
-        <h2 key={index} className="text-sm sm:text-base font-extrabold text-white mt-3 mb-1.5">
+        <h2 key={index} className="text-xs sm:text-base font-extrabold text-white mt-2.5 mb-1 break-words">
           {parseInline(trimmed.slice(3))}
         </h2>
       );
     } else if (trimmed.startsWith('### ')) {
       flushList();
       elements.push(
-        <h3 key={index} className="text-xs sm:text-sm font-bold text-indigo-400 mt-2.5 mb-1 flex items-center gap-1.5">
+        <h3 key={index} className="text-xs sm:text-sm font-bold text-indigo-400 mt-2 mb-1 flex items-start gap-1.5 break-words">
           {parseInline(trimmed.slice(4))}
         </h3>
       );
     } else if (trimmed === '---') {
       flushList();
-      elements.push(<hr key={index} className="border-slate-800/80 my-3" />);
+      elements.push(<hr key={index} className="border-slate-800/80 my-2.5" />);
     } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
       listItems.push(
-        <li key={index} className="text-slate-300 leading-relaxed text-xs sm:text-sm">
+        <li key={index} className="text-slate-300 leading-relaxed text-[11px] sm:text-sm break-words">
           {parseInline(trimmed.slice(2))}
         </li>
       );
     } else if (/^\d+\.\s/.test(trimmed)) {
       listItems.push(
-        <li key={index} className="text-slate-300 leading-relaxed text-xs sm:text-sm">
+        <li key={index} className="text-slate-300 leading-relaxed text-[11px] sm:text-sm break-words">
           {parseInline(trimmed.replace(/^\d+\.\s/, ''))}
         </li>
       );
     } else if (trimmed.length > 0) {
       flushList();
       elements.push(
-        <p key={index} className="text-slate-300 leading-relaxed text-xs sm:text-sm my-1.5">
+        <p key={index} className="text-slate-300 leading-relaxed text-[11px] sm:text-sm my-1 break-words">
           {parseInline(trimmed)}
         </p>
       );
@@ -196,101 +196,102 @@ export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onSuccess, onCan
   const markdownText = getMarkdownContent(terms);
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-fadeIn">
+    <div className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-2.5 sm:p-6 overflow-y-auto overflow-x-hidden animate-fadeIn min-w-0 max-w-full box-border">
       {/* Background Ambient Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-indigo-600/15 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[550px] aspect-square bg-indigo-600/15 rounded-full blur-3xl pointer-events-none"></div>
 
-      <div className="max-w-2xl w-full glass-card p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl space-y-5 relative my-auto">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shadow-lg shadow-indigo-500/10 flex-shrink-0">
-              <ShieldCheck className="w-6 h-6" />
+      <div className="max-w-2xl w-full min-w-0 max-w-full glass-card p-4 sm:p-7 rounded-2xl sm:rounded-3xl border border-slate-800 shadow-2xl space-y-3.5 sm:space-y-5 relative my-auto box-border">
+        {/* Modal Header */}
+        <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shadow-lg shadow-indigo-500/10 flex-shrink-0">
+              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="text-lg sm:text-xl font-extrabold text-white truncate">
+              <h1 className="text-sm sm:text-xl font-extrabold text-white truncate leading-tight">
                 {getHeaderTitle(terms)}
               </h1>
-              <p className="text-xs text-slate-400 truncate">
+              <p className="text-[10px] sm:text-xs text-slate-400 truncate">
                 {terms ? `Versi ${terms.version} — Temporary Box Agreement` : 'Private Box Temporary Sharing Agreement'}
               </p>
             </div>
           </div>
 
-          <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 whitespace-nowrap flex-shrink-0">
+          <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 whitespace-nowrap flex-shrink-0">
             Persetujuan Wajib
           </span>
         </div>
 
         {errorMsg && (
-          <div className="p-3.5 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-300 text-xs">
+          <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-300 text-xs break-words">
             {errorMsg}
           </div>
         )}
 
         {/* Scrollable Terms Content Box */}
-        <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800/90 max-h-[340px] sm:max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900/90 border border-slate-800/90 max-h-[48vh] sm:max-h-[380px] overflow-y-auto overflow-x-hidden pr-1.5 sm:pr-2 custom-scrollbar min-w-0 max-w-full break-words">
           {fetchingTerms ? (
-            <div className="py-8 flex items-center justify-center gap-2 text-slate-400">
-              <Loader2 className="w-5 h-5 animate-spin text-indigo-400" />
+            <div className="py-8 flex items-center justify-center gap-2 text-slate-400 text-xs sm:text-sm">
+              <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin text-indigo-400" />
               <span>Memuat data Syarat & Ketentuan dari database...</span>
             </div>
           ) : markdownText ? (
-            <div className="space-y-1">
+            <div className="space-y-1 min-w-0 max-w-full break-words">
               {renderMarkdown(markdownText)}
             </div>
           ) : (
-            <div className="space-y-4 text-xs sm:text-sm">
-              <h3 className="font-bold text-white text-base flex items-center gap-2">
-                <FileText className="w-4.5 h-4.5 text-indigo-400" />
+            <div className="space-y-3 text-xs sm:text-sm min-w-0 max-w-full break-words">
+              <h3 className="font-bold text-white text-xs sm:text-base flex items-center gap-2">
+                <FileText className="w-4 h-4 text-indigo-400 flex-shrink-0" />
                 <span>Aturan Penggunaan Sistem Temporary Box</span>
               </h3>
 
-              <div className="space-y-3">
-                <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800">
-                  <HardDrive className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
-                  <div>
+              <div className="space-y-2 sm:space-y-3">
+                <div className="flex items-start gap-2 p-2 sm:p-2.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                  <HardDrive className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0">
                     <strong className="text-slate-200">1. Kuota Penyimpanan:</strong>
-                    <span className="text-slate-400 block mt-0.5">
+                    <span className="text-slate-400 block mt-0.5 break-words">
                       Setiap pengguna mendapatkan alokasi penyimpanan maksimal sebesar <strong className="text-indigo-300">20 GB</strong>.
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800">
-                  <Clock className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" />
-                  <div>
+                <div className="flex items-start gap-2 p-2 sm:p-2.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                  <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-400 flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0">
                     <strong className="text-slate-200">2. Masa Aktif Akun:</strong>
-                    <span className="text-slate-400 block mt-0.5">
+                    <span className="text-slate-400 block mt-0.5 break-words">
                       Akun gratis aktif selama <strong className="text-purple-300">5 bulan</strong> sejak tanggal pendaftaran pertama kali.
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800">
-                  <Trash2 className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
-                  <div>
+                <div className="flex items-start gap-2 p-2 sm:p-2.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0">
                     <strong className="text-slate-200">3. Masa Kedaluwarsa & Penghapusan:</strong>
-                    <span className="text-slate-400 block mt-0.5">
+                    <span className="text-slate-400 block mt-0.5 break-words">
                       Setelah lewat 5 bulan, seluruh berkas, folder, dan riwayat akan <strong className="text-rose-300">dihapus secara permanen</strong> oleh sistem.
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800">
-                  <KeyRound className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-                  <div>
+                <div className="flex items-start gap-2 p-2 sm:p-2.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                  <KeyRound className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0">
                     <strong className="text-slate-200">4. Pembagian File & Log Akses:</strong>
-                    <span className="text-slate-400 block mt-0.5">
+                    <span className="text-slate-400 block mt-0.5 break-words">
                       Setiap pengaksesan atau pengunduhan berkas akan dicatat ke dalam log akses secara <strong className="text-amber-300">terenkripsi</strong> demi keamanan.
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800">
-                  <AlertOctagon className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                  <div>
+                <div className="flex items-start gap-2 p-2 sm:p-2.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                  <AlertOctagon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0">
                     <strong className="text-slate-200">5. Batasan Tanggung Jawab:</strong>
-                    <span className="text-slate-400 block mt-0.5">
+                    <span className="text-slate-400 block mt-0.5 break-words">
                       File atau folder yang terhapus <strong className="text-red-300">tidak dapat dikembalikan</strong>. Jangan menyimpan file penting di sistem ini. Kehilangan file tidak menjadi tanggung jawab sistem Temporary Box.
                     </span>
                   </div>
@@ -300,8 +301,8 @@ export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onSuccess, onCan
           )}
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-2.5">
-          <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+        <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] sm:text-xs flex items-start gap-2 sm:gap-2.5 leading-relaxed">
+          <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 flex-shrink-0 mt-0.5" />
           <span>
             Persetujuan wajib: Anda tidak dapat mengakses sistem, mengunggah, maupun mengunduh berkas sebelum menyetujui ketentuan ini.
           </span>
@@ -309,7 +310,7 @@ export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onSuccess, onCan
 
         {/* Interactive Glassmorphic Agreement Card */}
         <label
-          className={`p-4 rounded-2xl border transition-all duration-300 flex items-start gap-3.5 cursor-pointer group select-none ${agreed
+          className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border transition-all duration-300 flex items-start gap-3 cursor-pointer group select-none ${agreed
             ? 'bg-indigo-950/40 border-indigo-500/60 shadow-lg shadow-indigo-500/10 ring-2 ring-indigo-500/30'
             : 'bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900/90'
             }`}
@@ -323,40 +324,40 @@ export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onSuccess, onCan
               className="sr-only"
             />
             <div
-              className={`w-5 h-5 rounded-lg border transition-all flex items-center justify-center ${agreed
+              className={`w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-lg border transition-all flex items-center justify-center ${agreed
                 ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 border-indigo-400 shadow-md shadow-indigo-500/40 scale-105'
                 : 'bg-slate-950 border-slate-700 group-hover:border-slate-500'
                 }`}
             >
-              {agreed && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+              {agreed && <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white stroke-[3]" />}
             </div>
           </div>
 
-          <div className="space-y-1 min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className={`text-xs font-bold transition-colors ${agreed ? 'text-indigo-300' : 'text-slate-300 group-hover:text-white'}`}>
+          <div className="space-y-0.5 sm:space-y-1 min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <span className={`text-[11px] sm:text-xs font-bold transition-colors ${agreed ? 'text-indigo-300' : 'text-slate-300 group-hover:text-white'}`}>
                 Konfirmasi Persetujuan Pengguna
               </span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 Wajib
               </span>
             </div>
-            <p className={`text-xs leading-relaxed transition-colors ${agreed ? 'text-slate-200' : 'text-slate-400 group-hover:text-slate-300'}`}>
+            <p className={`text-[10px] sm:text-xs leading-relaxed transition-colors ${agreed ? 'text-slate-200' : 'text-slate-400 group-hover:text-slate-300'} break-words`}>
               Saya telah membaca, memahami, dan menyetujui seluruh Syarat & Ketentuan Penggunaan Akun di atas.
             </p>
           </div>
         </label>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-3 pt-1">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 pt-0.5">
           <button
             type="button"
             onClick={handleDecline}
             disabled={loading}
-            className="px-4 py-3.5 rounded-2xl border border-slate-800 hover:border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-bold transition flex items-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
+            className="w-full sm:w-auto px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-slate-800 hover:border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
             title="Keluar dari sistem jika menolak"
           >
-            <LogOut className="w-4 h-4 text-slate-500" />
+            <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-500" />
             <span>Keluar Akun</span>
           </button>
 
@@ -364,20 +365,20 @@ export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onSuccess, onCan
             type="button"
             onClick={handleProceed}
             disabled={!agreed || loading}
-            className={`flex-1 py-3.5 rounded-2xl font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all duration-200 ${agreed && !loading
+            className={`w-full sm:flex-1 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all duration-200 ${agreed && !loading
               ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-xl shadow-indigo-600/30 cursor-pointer active:scale-[0.99]'
               : 'bg-slate-900 text-slate-600 cursor-not-allowed border border-slate-800'
               }`}
           >
             {loading ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin text-indigo-300" />
+                <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-indigo-300" />
                 <span>Menyimpan Persetujuan...</span>
               </>
             ) : (
               <>
                 <span>Setujui & Masuk Sistem</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </>
             )}
           </button>

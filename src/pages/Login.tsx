@@ -6,8 +6,9 @@ import api from '../services/api';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import appAndPlayImg from '../assets/appandplay.png';
-import { getToken, getStoredUser, setToken, setStoredUser } from '../utils/auth';
+import { getToken, getStoredUser, setToken, setStoredUser, clearAuth } from '../utils/auth';
 import { MAX_FREE_USERS } from '../constants/config';
+import { TermsModal } from '../components/dashboard/TermsModal';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ export const Login: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [loggingIn, setLoggingIn] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   useEffect(() => {
     const savedUser = getStoredUser();
@@ -53,8 +55,8 @@ export const Login: React.FC = () => {
     setToken(data.token);
     setStoredUser(data.user);
 
-    if (data.isNewUser) {
-      navigate('/terms', { replace: true });
+    if (data.isNewUser || !data.user.acceptedTermsAt) {
+      setShowTermsModal(true);
     } else {
       navigate('/dashboard', { replace: true });
     }
@@ -228,6 +230,18 @@ export const Login: React.FC = () => {
 
       {/* Footer Component */}
       <Footer />
+
+      {/* Rendering Terms Modal directly here */}
+      {showTermsModal && (
+        <TermsModal
+          isOpen={showTermsModal}
+          onSuccess={() => navigate('/dashboard', { replace: true })}
+          onCancel={() => {
+            setShowTermsModal(false);
+            clearAuth();
+          }}
+        />
+      )}
     </div>
   );
 };
