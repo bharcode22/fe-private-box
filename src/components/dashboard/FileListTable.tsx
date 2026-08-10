@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { FileText, Share2, Download, Image, Video, Music, FileQuestion, Trash2, Edit2, UploadCloud, FolderPlus, CheckSquare, Folder, LayoutGrid, List, Eye, Loader2 } from 'lucide-react';
+import { FileText, Share2, Download, Image, Video, Music, FileQuestion, Trash2, Edit2, UploadCloud, FolderPlus, CheckSquare, Folder, LayoutGrid, List, Eye, Loader2, MoreVertical } from 'lucide-react';
 import api from '../../services/api';
 import { FileListToolbar } from './FileListToolbar';
 
@@ -39,6 +39,7 @@ interface FileListTableProps {
   onCreateFolderClick?: () => void;
   onBatchDelete?: (selectedFileIds: string[], selectedFolderIds: string[]) => void;
   onPreviewFile?: (file: FileItem) => void;
+  onOpenActionMenu?: (target: { type: 'file'; data: FileItem } | { type: 'folder'; data: FolderItem }) => void;
   hasMore?: boolean;
   loadingMore?: boolean;
   onLoadMore?: () => void;
@@ -265,6 +266,7 @@ export const FileListTable: React.FC<FileListTableProps> = ({
   onCreateFolderClick,
   onBatchDelete,
   onPreviewFile,
+  onOpenActionMenu,
   hasMore,
   loadingMore,
   onLoadMore,
@@ -690,80 +692,50 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                     onFolderClick(folder.id, folder.name);
                   }
                 }}
-                className={`p-4 transition space-y-3 cursor-pointer group ${selectedFolderIds.includes(folder.id) ? 'bg-amber-950/20 border-l-4 border-amber-500' : 'hover:bg-slate-900/60'
+                className={`p-3.5 transition cursor-pointer group border-b border-slate-800/60 ${selectedFolderIds.includes(folder.id) ? 'bg-amber-950/20 border-l-4 border-amber-500' : 'hover:bg-slate-900/60'
                   }`}
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     {isSelectionMode && (
                       <CustomCheckbox
                         checked={selectedFolderIds.includes(folder.id)}
                         onChange={() => toggleFolderSelection(folder.id)}
                       />
                     )}
-                    <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-110 transition flex-shrink-0">
+                    <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-105 transition flex-shrink-0">
                       <Folder className="w-5 h-5" />
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <h4 className="font-semibold text-sm text-white group-hover:text-amber-300 transition truncate">{folder.name}</h4>
                       <p className="text-[11px] text-slate-400">
                         Folder • {new Date(folder.createdAt).toLocaleDateString('id-ID')}
                       </p>
                     </div>
                   </div>
-                  {folder.shares && folder.shares.length > 0 && (
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-mono border flex-shrink-0 ${folder.shares[0].isActive
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        : 'bg-red-500/10 text-red-400 border-red-500/20'
-                        }`}
-                    >
-                      {folder.shares[0].isActive ? `Aktif: ${folder.shares[0].uniqueCode}` : `Nonaktif (${folder.shares[0].uniqueCode})`}
-                    </span>
-                  )}
-                </div>
 
-                <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-800/40" onClick={(e) => e.stopPropagation()}>
-                  {onDownloadFolder && (
+                  <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                    {folder.shares && folder.shares.length > 0 && (
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono border ${folder.shares[0].isActive
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : 'bg-red-500/10 text-red-400 border-red-500/20'
+                          }`}
+                      >
+                        {folder.shares[0].isActive ? 'Shared' : 'Off'}
+                      </span>
+                    )}
+
                     <button
+                      type="button"
                       disabled={isSelectionMode}
-                      onClick={() => onDownloadFolder(folder.id, folder.name)}
-                      className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
+                      onClick={() => onOpenActionMenu && onOpenActionMenu({ type: 'folder', data: folder })}
+                      className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer active:scale-90"
+                      title="Opsi Folder"
                     >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>Unduh</span>
+                      <MoreVertical className="w-5 h-5" />
                     </button>
-                  )}
-                  {onGenerateFolderShareCode && (
-                    <button
-                      disabled={isSelectionMode}
-                      onClick={() => onGenerateFolderShareCode(folder.id, folder.name, folder.shares)}
-                      className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                    >
-                      <Share2 className="w-3.5 h-3.5" />
-                      <span>Bagikan</span>
-                    </button>
-                  )}
-                  {onRenameFolder && (
-                    <button
-                      disabled={isSelectionMode}
-                      onClick={() => onRenameFolder(folder.id, folder.name)}
-                      className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                      <span>Ubah Nama</span>
-                    </button>
-                  )}
-                  {onDeleteFolder && (
-                    <button
-                      disabled={isSelectionMode}
-                      onClick={() => onDeleteFolder(folder.id, folder.name)}
-                      className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Hapus</span>
-                    </button>
-                  )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -782,22 +754,22 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                       onPreviewFile(file);
                     }
                   }}
-                  className={`p-4 transition space-y-3 cursor-pointer ${selectedFileIds.includes(file.id) ? 'bg-indigo-950/20 border-l-4 border-indigo-500' : 'hover:bg-slate-900/40'
+                  className={`p-3.5 transition cursor-pointer border-b border-slate-800/60 ${selectedFileIds.includes(file.id) ? 'bg-indigo-950/20 border-l-4 border-indigo-500' : 'hover:bg-slate-900/40'
                     }`}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                       {isSelectionMode && (
                         <CustomCheckbox
                           checked={selectedFileIds.includes(file.id)}
                           onChange={() => toggleFileSelection(file.id)}
                         />
                       )}
-                      <div className={`p-2 rounded-xl border flex-shrink-0 ${colorClass}`}>
+                      <div className={`p-2.5 rounded-xl border flex-shrink-0 ${colorClass}`}>
                         <Icon className="w-5 h-5" />
                       </div>
-                      <div className="min-w-0">
-                        <h4 className={`font-semibold text-sm text-white truncate max-w-[180px] transition ${textHoverClass}`}>
+                      <div className="min-w-0 flex-1">
+                        <h4 className={`font-semibold text-sm text-white truncate transition ${textHoverClass}`}>
                           {file.fileName}
                         </h4>
                         <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
@@ -808,56 +780,28 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                       </div>
                     </div>
 
-                    {file.shares && file.shares.length > 0 && (
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-mono border flex-shrink-0 ${file.shares[0].isActive
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                          : 'bg-red-500/10 text-red-400 border-red-500/20'
-                          }`}
-                      >
-                        {file.shares[0].isActive ? `Aktif: ${file.shares[0].uniqueCode}` : `Nonaktif (${file.shares[0].uniqueCode})`}
-                      </span>
-                    )}
-                  </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                      {file.shares && file.shares.length > 0 && (
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-mono border ${file.shares[0].isActive
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : 'bg-red-500/10 text-red-400 border-red-500/20'
+                            }`}
+                        >
+                          {file.shares[0].isActive ? 'Shared' : 'Off'}
+                        </span>
+                      )}
 
-                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-800/40 flex-wrap" onClick={(e) => e.stopPropagation()}>
-
-                    <button
-                      disabled={isSelectionMode}
-                      onClick={() => onDownloadPrivate(file.id, file.fileName)}
-                      className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>Unduh</span>
-                    </button>
-                    <button
-                      disabled={isSelectionMode}
-                      onClick={() => onGenerateShareCode(file.id, file.fileName, file.shares)}
-                      className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                    >
-                      <Share2 className="w-3.5 h-3.5" />
-                      <span>Bagikan</span>
-                    </button>
-                    {onRenameFile && (
                       <button
+                        type="button"
                         disabled={isSelectionMode}
-                        onClick={() => onRenameFile(file.id, file.fileName)}
-                        className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold border border-amber-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
+                        onClick={() => onOpenActionMenu && onOpenActionMenu({ type: 'file', data: file })}
+                        className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer active:scale-90"
+                        title="Opsi File"
                       >
-                        <Edit2 className="w-3.5 h-3.5" />
-                        <span>Ubah Nama</span>
+                        <MoreVertical className="w-5 h-5" />
                       </button>
-                    )}
-                    {onDeleteFile && (
-                      <button
-                        disabled={isSelectionMode}
-                        onClick={() => onDeleteFile(file.id, file.fileName)}
-                        className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-semibold border border-red-500/30 transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Hapus</span>
-                      </button>
-                    )}
+                    </div>
                   </div>
                 </div>
               );

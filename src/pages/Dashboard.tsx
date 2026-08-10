@@ -19,6 +19,9 @@ import { getDaysRemaining } from '../utils/dateUtils';
 import { downloadService } from '../services/downloadService';
 import { shareService } from '../services/shareService';
 import { useFileUpload } from '../hooks/useFileUpload';
+import { MobileFAB } from '../components/dashboard/MobileFAB';
+import { FileActionBottomSheet } from '../components/dashboard/FileActionBottomSheet';
+import { MobileBottomNav } from '../components/layout/MobileBottomNav';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -51,6 +54,13 @@ export const Dashboard: React.FC = () => {
   const [isSelectionMode, setIsSelectionMode] = useState<boolean>(false);
   const [selectedFolderIds, setSelectedFolderIds] = useState<string[]>([]);
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
+  const [actionBottomSheetItem, setActionBottomSheetItem] = useState<{
+    type: 'file';
+    data: FileItem;
+  } | {
+    type: 'folder';
+    data: FolderItem;
+  } | null>(null);
 
   useEffect(() => {
     localStorage.setItem('pb_view_mode', viewMode);
@@ -439,11 +449,11 @@ export const Dashboard: React.FC = () => {
       />
 
       {/* Main Dashboard Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex-1 w-full space-y-6 sm:space-y-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-24 sm:py-8 flex-1 w-full space-y-6 sm:space-y-8">
         <div className="space-y-4">
           {/* Dashboard Tabs & Control Toolbar (Sticky Header on Scroll) */}
-          <div className="sticky top-[58px] sm:top-[65px] z-30 bg-slate-950/95 backdrop-blur-md pt-2 pb-3 space-y-3 border-b border-slate-800/80 -mx-4 sm:-mx-6 px-4 sm:px-6 shadow-lg transition-all">
-            <div className="flex border-b border-slate-800 space-x-4 sm:space-x-6 overflow-x-auto whitespace-nowrap">
+          <div className="sticky top-[58px] sm:top-[65px] z-30 bg-slate-950/95 backdrop-blur-md pt-1.5 pb-2 sm:pt-2 sm:pb-3 space-y-2 sm:space-y-3 border-b border-slate-800/80 -mx-4 sm:-mx-6 px-4 sm:px-6 shadow-lg transition-all">
+            <div className="hidden sm:flex border-b border-slate-800 space-x-4 sm:space-x-6 overflow-x-auto whitespace-nowrap">
               <button
                 onClick={() => setActiveTab('files')}
                 className={`pb-3 text-xs sm:text-sm font-bold flex items-center gap-2 border-b-2 transition flex-shrink-0 cursor-pointer ${activeTab === 'files'
@@ -465,9 +475,9 @@ export const Dashboard: React.FC = () => {
             </div>
 
             {activeTab === 'files' && (
-              <div className="space-y-3">
-                {/* 1. Action Toolbar Buttons (Paling Atas) */}
-                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full">
+              <div className="space-y-2 sm:space-y-3">
+                {/* 1. Action Toolbar Buttons (Hanya Tampil di Desktop, di Mobile menggunakan FAB) */}
+                <div className="hidden sm:flex items-center gap-2 w-full">
                   <button
                     onClick={() => fetchDashboardData(true)}
                     disabled={isRefreshing}
@@ -479,14 +489,14 @@ export const Dashboard: React.FC = () => {
                   </button>
                   <button
                     onClick={() => setIsUploadModalOpen(true)}
-                    className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer active:scale-95 whitespace-nowrap"
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer active:scale-95 whitespace-nowrap"
                   >
                     <UploadCloud className="w-4 h-4" />
                     <span>Unggah File</span>
                   </button>
                   <button
                     onClick={() => setIsCreateFolderModalOpen(true)}
-                    className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap border border-slate-700/50"
+                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap border border-slate-700/50"
                   >
                     <svg className="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -495,31 +505,43 @@ export const Dashboard: React.FC = () => {
                   </button>
                 </div>
 
-                {/* 2. Search Input Bar & Category Filter Pills (Nomor 2) */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                {/* 2. Search Input Bar & Category Filter Pills */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
                   {/* Search Input Box */}
-                  <div className="relative flex-1 min-w-[200px]">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Cari nama file..."
-                      className="w-full pl-9 pr-8 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition shadow-inner"
-                    />
-                    {searchQuery && (
-                      <button
-                        onClick={() => setSearchQuery('')}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5 rounded-md hover:bg-slate-800 transition"
-                        title="Hapus Pencarian"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+                  <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                    <div className="relative flex-1">
+                      <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Cari nama file..."
+                        className="w-full pl-9 pr-8 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition shadow-inner"
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => setSearchQuery('')}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5 rounded-md hover:bg-slate-800 transition"
+                          title="Hapus Pencarian"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Tombol Refresh Ringkas Khusus Mobile */}
+                    <button
+                      onClick={() => fetchDashboardData(true)}
+                      disabled={isRefreshing}
+                      className="sm:hidden p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white active:scale-95 transition flex-shrink-0 cursor-pointer disabled:opacity-50"
+                      title="Muat Ulang Data"
+                    >
+                      <RotateCw className={`w-4 h-4 text-indigo-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    </button>
                   </div>
 
                   {/* Category Filter Pills (Scrollable on small screens) */}
-                  <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap pb-1 sm:pb-0 scrollbar-none">
+                  <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap pb-0.5 sm:pb-0 scrollbar-none">
                     {[
                       { id: 'all', label: 'Semua', icon: FileText },
                       { id: 'document', label: 'Dokumen', icon: FileText },
@@ -534,7 +556,7 @@ export const Dashboard: React.FC = () => {
                         <button
                           key={cat.id}
                           onClick={() => setSelectedCategory(cat.id)}
-                          className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition flex-shrink-0 cursor-pointer ${isActive
+                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition flex-shrink-0 cursor-pointer ${isActive
                             ? 'bg-indigo-600/25 text-indigo-300 border border-indigo-500/40 font-bold shadow-sm'
                             : 'bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800'
                             }`}
@@ -551,7 +573,7 @@ export const Dashboard: React.FC = () => {
                           setSearchQuery('');
                           setSelectedCategory('all');
                         }}
-                        className="px-2 py-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/40 text-red-300 border border-red-800/40 text-xs font-semibold transition flex items-center gap-1 cursor-pointer flex-shrink-0"
+                        className="px-2 py-1 rounded-lg bg-red-950/40 hover:bg-red-900/40 text-red-300 border border-red-800/40 text-xs font-semibold transition flex items-center gap-1 cursor-pointer flex-shrink-0"
                         title="Reset Filter"
                       >
                         <X className="w-3.5 h-3.5" />
@@ -561,45 +583,44 @@ export const Dashboard: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 3. Susunan Folder / Interactive Breadcrumb Pills (Nomor 3) */}
-                <div className="flex items-center gap-1.5 p-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-semibold overflow-x-auto whitespace-nowrap shadow-inner max-w-full">
-                  <button
-                    onClick={() => navigateToFolder(null)}
-                    className={`px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition flex-shrink-0 ${breadcrumbs.length === 0
-                      ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 font-bold shadow-sm cursor-default'
-                      : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/50 cursor-pointer'
-                      }`}
-                    title="Kembali ke Root (Direktori Utama)"
-                  >
-                    <Home className="w-3.5 h-3.5 text-indigo-400" />
-                    <span>Root</span>
-                  </button>
+                {/* 3. Susunan Folder / Interactive Breadcrumb Pills (Hanya tampil jika ada di dalam sub-folder) */}
+                {breadcrumbs.length > 0 && (
+                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-semibold overflow-x-auto whitespace-nowrap shadow-inner max-w-full">
+                    <button
+                      onClick={() => navigateToFolder(null)}
+                      className="px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition flex-shrink-0 bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/50 cursor-pointer"
+                      title="Kembali ke Root (Direktori Utama)"
+                    >
+                      <Home className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>Root</span>
+                    </button>
 
-                  {breadcrumbs.map((crumb, idx) => {
-                    const isLast = idx === breadcrumbs.length - 1;
-                    return (
-                      <React.Fragment key={crumb.id}>
-                        <ChevronRight className="w-3.5 h-3.5 text-slate-600 flex-shrink-0" />
-                        <button
-                          onClick={() => {
-                            if (!isLast) {
-                              navigateToFolder(crumb.id);
-                            }
-                          }}
-                          disabled={isLast}
-                          className={`px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition max-w-[140px] sm:max-w-xs flex-shrink-0 ${isLast
-                            ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 font-bold shadow-sm cursor-default'
-                            : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/50 cursor-pointer'
-                            }`}
-                        >
-                          <Folder className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
-                          <span className="truncate">{crumb.name}</span>
-                        </button>
-                      </React.Fragment>
-                    );
-                  })}
-                </div>
-
+                    {breadcrumbs.map((crumb, idx) => {
+                      const isLast = idx === breadcrumbs.length - 1;
+                      return (
+                        <React.Fragment key={crumb.id}>
+                          <ChevronRight className="w-3.5 h-3.5 text-slate-600 flex-shrink-0" />
+                          <button
+                            onClick={() => {
+                              if (!isLast) {
+                                navigateToFolder(crumb.id);
+                              }
+                            }}
+                            disabled={isLast}
+                            title={crumb.name}
+                            className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition max-w-[90px] sm:max-w-[160px] flex-shrink-0 ${isLast
+                              ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 font-bold shadow-sm cursor-default'
+                              : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/50 cursor-pointer'
+                              }`}
+                          >
+                            <Folder className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+                            <span className="truncate">{crumb.name}</span>
+                          </button>
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+                )}
                 {/* 4. Modular FileListToolbar Component (Nomor 4) */}
                 <FileListToolbar
                   isSelectionMode={isSelectionMode}
@@ -669,6 +690,8 @@ export const Dashboard: React.FC = () => {
                   onFolderClick={(id) => navigateToFolder(id)}
                   onUploadClick={() => setIsUploadModalOpen(true)}
                   onCreateFolderClick={() => setIsCreateFolderModalOpen(true)}
+                  onPreviewFile={(file) => setPreviewFileModal({ file, isOpen: true })}
+                  onOpenActionMenu={(target) => setActionBottomSheetItem(target)}
                   onGenerateShareCode={handleGenerateShareCode}
                   onGenerateFolderShareCode={handleGenerateFolderShareCode}
                   onDownloadPrivate={handleDownloadPrivate}
@@ -763,7 +786,6 @@ export const Dashboard: React.FC = () => {
                       },
                     });
                   }}
-                  onPreviewFile={(file) => setPreviewFileModal({ file, isOpen: true })}
                   hasMore={hasMore}
                   loadingMore={loadingMore}
                   onLoadMore={loadMoreFiles}
@@ -883,6 +905,114 @@ export const Dashboard: React.FC = () => {
         currentItemIndex={deleteCurrentIndex}
         currentItemName={deleteCurrentName}
         statusMessage={deleteStatusMessage}
+      />
+      {/* Floating Action Button (FAB) Khusus Mobile */}
+      <MobileFAB
+        onUploadClick={() => setIsUploadModalOpen(true)}
+        onCreateFolderClick={() => setIsCreateFolderModalOpen(true)}
+      />
+
+      {/* Google Drive Bottom Sheet Action Menu */}
+      <FileActionBottomSheet
+        isOpen={Boolean(actionBottomSheetItem)}
+        onClose={() => setActionBottomSheetItem(null)}
+        targetItem={actionBottomSheetItem}
+        onPreview={(file) => setPreviewFileModal({ file, isOpen: true })}
+        onDownloadFile={(id, name) => handleDownloadPrivate(id, name)}
+        onDownloadFolder={(id, name) => handleDownloadFolder(id, name)}
+        onShareFile={(id, name, shares) => handleGenerateShareCode(id, name, shares)}
+        onShareFolder={(id, name, shares) => handleGenerateFolderShareCode(id, name, shares)}
+        onRenameFile={(id, currentName) => {
+          setPromptModal({
+            isOpen: true,
+            title: 'Ubah Nama File',
+            label: 'Masukkan nama file baru:',
+            initialValue: currentName || '',
+            onConfirm: async (newName) => {
+              setPromptModal((prev) => ({ ...prev, isOpen: false }));
+              try {
+                await api.put(`/api/files/${id}`, { name: newName });
+                showToast('Nama file berhasil diubah!', 'success');
+                fetchDashboardData();
+              } catch (err: any) {
+                showToast(err.response?.data?.error || 'Gagal mengubah nama file', 'error');
+              }
+            },
+          });
+        }}
+        onRenameFolder={(id, currentName) => {
+          setPromptModal({
+            isOpen: true,
+            title: 'Ubah Nama Folder',
+            label: 'Masukkan nama folder baru:',
+            initialValue: currentName || '',
+            confirmText: 'Simpan Nama',
+            onConfirm: async (newName) => {
+              setPromptModal((prev) => ({ ...prev, isOpen: false }));
+              try {
+                await api.put(`/api/folders/${id}`, { name: newName });
+                showToast('Nama folder berhasil diubah!', 'success');
+                fetchDashboardData();
+              } catch (err: any) {
+                showToast(err.response?.data?.error || 'Gagal mengubah nama folder', 'error');
+              }
+            },
+          });
+        }}
+        onDeleteFile={(id, name) => {
+          setConfirmModal({
+            isOpen: true,
+            title: 'Hapus File',
+            message: (
+              <div className="space-y-2">
+                <p>Apakah Anda yakin ingin menghapus file <strong className="text-white font-semibold">"{name || 'ini'}"</strong></p>
+                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-2">
+                  <span>⚠️ File yang dihapus tidak dapat dikembalikan.</span>
+                </div>
+              </div>
+            ),
+            onConfirm: async () => {
+              setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+              executeDeleteWithProgress(
+                1,
+                name || 'File',
+                () => api.delete(`/api/files/${id}`),
+                'File berhasil dihapus!'
+              );
+            },
+          });
+        }}
+        onDeleteFolder={(id, name) => {
+          setConfirmModal({
+            isOpen: true,
+            title: 'Hapus Folder',
+            message: (
+              <div className="space-y-2">
+                <p>Apakah Anda yakin ingin menghapus folder <strong className="text-white font-semibold">"{name || 'ini'}"</strong> beserta seluruh isinya?</p>
+                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-2">
+                  <span>⚠️ Folder yang dihapus tidak dapat dikembalikan.</span>
+                </div>
+              </div>
+            ),
+            onConfirm: async () => {
+              setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+              executeDeleteWithProgress(
+                1,
+                name || 'Folder',
+                () => api.delete(`/api/folders/${id}`),
+                'Folder berhasil dihapus!'
+              );
+            },
+          });
+        }}
+        formatBytes={formatBytes}
+      />
+
+      {/* Google Drive Mobile Bottom Navigation Bar */}
+      <MobileBottomNav
+        activeTab={activeTab}
+        onTabChange={(tab) => setActiveTab(tab)}
+        user={user}
       />
     </div>
   );
