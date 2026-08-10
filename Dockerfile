@@ -42,8 +42,8 @@ RUN npm install -g serve
 # Copy compiled static assets from builder stage
 COPY --from=builder /app/dist ./dist
 
-# Expose container port 3000
-EXPOSE 3000
+# Expose container port 3001
+EXPOSE 3001
 
-# Start lightweight Node.js web server with SPA routing fallback (-s)
-CMD ["serve", "-s", "dist", "-l", "3000"]
+# Start lightweight Node.js web server with SPA routing fallback (-s) on port 3001
+CMD ["serve", "-s", "dist", "-l", "3001"]
