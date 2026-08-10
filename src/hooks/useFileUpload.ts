@@ -145,7 +145,11 @@ export const useFileUpload = () => {
       if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
         return;
       }
-      onShowToast(err.response?.data?.error || 'Gagal mengunggah file', 'error');
+      if (err.response?.status === 413) {
+        onShowToast('Ukuran file/request terlalu besar (Status 413 Content Too Large). Batas maksimal Cloudflare Tunnel adalah 100 MB per pengunggahan.', 'error');
+      } else {
+        onShowToast(err.response?.data?.error || 'Gagal mengunggah file', 'error');
+      }
     } finally {
       if (sseRef.current) {
         sseRef.current.close();
