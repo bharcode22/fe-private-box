@@ -232,7 +232,7 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
           </div>
 
           {/* Toggle Allow Download */}
-          <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2">
+          {/* <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2.5">
                 <div className={`p-1.5 rounded-lg ${allowDownload ? 'bg-indigo-500/10 text-indigo-400' : 'bg-rose-500/10 text-rose-400'}`}>
@@ -260,7 +260,7 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
                 )}
               </button>
             </div>
-          </div>
+          </div> */}
 
           {/* Toggle Active Status */}
           <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2">
@@ -272,7 +272,15 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
                 <div>
                   <h4 className="text-xs font-bold text-slate-200">Status Link Akses</h4>
                   <p className="text-[11px] text-slate-400">
-                    {isActive ? 'Link aktif dan dapat diakses publik' : 'Link dinonaktifkan sementara'}
+                    {isActive ? (
+                      <span className="text-emerald-400 font-semibold">
+                        Aktif — Link dapat diakses dan file dapat diunduh.
+                      </span>
+                    ) : (
+                      <span className="text-rose-400 font-semibold">
+                        Nonaktif — Link dikunci. Pengakses tidak dapat mengunduh file.
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>
@@ -346,7 +354,14 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
         <ConfirmModal
           isOpen={showDeleteConfirm}
           title="Hapus Link Pembagian"
-          message={`Apakah Anda yakin ingin menghapus link pembagian "${uniqueCode}"? Semua izin pengunduhan akan dicabut dan log pembagian akan dibersihkan.`}
+          message={(
+            <div className="space-y-2">
+              <p>Apakah Anda yakin ingin menghapus link pembagian <strong className="text-white font-semibold">"{uniqueCode}"</strong>?</p>
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-2">
+                <span>⚠️ Penerima tidak akan dapat mengunduh file ini lagi.</span>
+              </div>
+            </div>
+          )}
           confirmText="Ya, Hapus Link"
           cancelText="Batal"
           isDanger={true}

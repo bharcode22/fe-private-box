@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
-import { Download, Lock, Mail, Key, FileText, Folder, RefreshCw, AlertCircle, Sparkles, CheckCircle2, HardDrive } from 'lucide-react';
+import { Download, Lock, Mail, Key, FileText, Folder, RefreshCw, AlertCircle, Sparkles, CheckCircle2, HardDrive, ArrowLeft } from 'lucide-react';
 import api from '../services/api';
 import { Footer } from '../components/layout/Footer';
 
@@ -220,14 +220,24 @@ export const AccessFile: React.FC = () => {
 
       {/* Main Container */}
       <main className="max-w-xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex-1 flex flex-col justify-center">
-        {/* Brand Header Header minimal */}
-        <div className="flex items-center justify-center space-x-2.5 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-            <HardDrive className="w-5 h-5 text-white" />
+        {/* Navigation & Brand Header */}
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition duration-200 shadow-md group"
+          >
+            <ArrowLeft className="w-4 h-4 text-indigo-400 group-hover:-translate-x-0.5 transition-transform" />
+            <span>Kembali ke Dashboard</span>
+          </button>
+
+          <div className="flex items-center space-x-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+              <HardDrive className="w-4.5 h-4.5 text-white" />
+            </div>
+            <span className="text-lg font-bold tracking-tight">
+              Private<span className="text-indigo-400">Box</span>
+            </span>
           </div>
-          <span className="text-xl font-bold tracking-tight">
-            Private<span className="text-indigo-400">Box</span>
-          </span>
         </div>
 
         <div className="glass-card p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl space-y-6">
@@ -401,7 +411,7 @@ export const AccessFile: React.FC = () => {
               <span>Sering Membagikan File Terproteksi?</span>
             </div>
             <p className="text-[11px] text-slate-400">
-              Dapatkan kuota cloud storage <strong>10 GB Gratis</strong> untuk menyimpan & membagikan file pribadi Anda secara terenkripsi.
+              Dapatkan kuota cloud storage <strong>20 GB Gratis</strong> untuk menyimpan & membagikan file pribadi Anda secara terenkripsi.
             </p>
 
             {authError && (

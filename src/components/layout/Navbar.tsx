@@ -58,7 +58,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <HardDrive className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
           <span className="text-lg sm:text-xl font-bold tracking-tight">
-            Private<span className="text-indigo-400">Box</span>
+            Temporary<span className="text-indigo-400">Box</span>
           </span>
         </Link>
 

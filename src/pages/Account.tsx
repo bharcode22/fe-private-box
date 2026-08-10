@@ -62,7 +62,7 @@ export const Account: React.FC = () => {
   };
 
   const usedBytes = Number(userInfo?.storageUsed || 0);
-  const limitBytes = Number(userInfo?.storageLimit || import.meta.env.VITE_FREE_USER_QUOTA_BYTES || 10737418240);
+  const limitBytes = Math.max(Number(userInfo?.storageLimit || 0), Number(import.meta.env.VITE_FREE_USER_QUOTA_BYTES || 21474836480));
   const quotaPercent = Math.min(100, (usedBytes / limitBytes) * 100);
   const daysLeft = getDaysRemaining(userInfo?.expiresAt);
 
@@ -122,7 +122,7 @@ export const Account: React.FC = () => {
 
           <div className="flex items-center gap-2 bg-slate-900/80 px-3.5 py-2 rounded-xl border border-slate-800/80 text-xs">
             <span className="text-slate-400">Tipe Lisensi:</span>
-            <span className="font-bold text-indigo-400">Free Tier (10 GB / 30 Hari)</span>
+            <span className="font-bold text-indigo-400">Free Tier (20 GB / 5 Bulan)</span>
           </div>
         </div>
 

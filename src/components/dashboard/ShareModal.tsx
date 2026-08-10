@@ -131,18 +131,18 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             <p className="text-[11px] text-slate-400">
               {isActive ? (
                 <span className="text-emerald-400 font-semibold">
-                  Aktif — Link terbuka dan dapat diakses publik.
+                  Aktif — Link dapat diakses dan file dapat diunduh.
                 </span>
               ) : (
                 <span className="text-rose-400 font-semibold">
-                  Nonaktif — Link dikunci. Pengakses tidak akan dapat masuk.
+                  Nonaktif — Link dikunci. Pengakses tidak dapat mengunduh file.
                 </span>
               )}
             </p>
           </div>
 
           {/* Toggle Allow Download */}
-          <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2">
+          {/* <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                 <Download className="w-4 h-4 text-indigo-400" />
@@ -171,7 +171,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 </span>
               )}
             </p>
-          </div>
+          </div> */}
 
           {/* Expiration Date Selector */}
           <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2">

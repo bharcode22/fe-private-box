@@ -65,7 +65,7 @@ import { createPortal } from 'react-dom';
 interface ConfirmModalProps {
   isOpen: boolean;
   title: string;
-  message: string;
+  message: React.ReactNode;
   confirmText?: string;
   cancelText?: string;
   isDanger?: boolean;

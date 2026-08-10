@@ -26,56 +26,58 @@ export const BackgroundDeleteWidget: React.FC<BackgroundDeleteWidgetProps> = ({
   const activePercent = Math.min(100, Math.max(0, deleteProgress));
 
   return (
-    <div className="fixed bottom-5 right-5 z-40 animate-in slide-in-from-bottom-5 fade-in duration-300">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in slide-in-from-bottom-5 fade-in duration-300">
       {isMinimized ? (
         /* Minimized Floating Pill Badge */
         <button
           onClick={() => setIsMinimized(false)}
-          className="flex items-center gap-2.5 px-4 py-3 rounded-full bg-slate-900/95 border border-rose-500/40 text-white shadow-2xl backdrop-blur-md hover:bg-slate-800 transition cursor-pointer active:scale-95 group"
+          className="flex items-center justify-between gap-3 px-5 py-3 rounded-full bg-slate-900/95 border border-rose-500/40 text-white shadow-2xl backdrop-blur-md hover:bg-slate-800 transition cursor-pointer active:scale-95 group min-w-[280px] sm:min-w-[360px] max-w-[90vw]"
           title="Klik untuk melihat detail proses penghapusan"
         >
-          <div className="relative flex items-center justify-center">
-            {isDone ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            ) : (
-              <Trash2 className="w-4 h-4 text-rose-400 animate-pulse" />
-            )}
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full animate-ping" />
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="relative flex items-center justify-center flex-shrink-0">
+              {isDone ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              ) : (
+                <Trash2 className="w-4 h-4 text-rose-400 animate-pulse" />
+              )}
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full animate-ping" />
+            </div>
+            <span className="text-xs font-bold text-slate-200 truncate">
+              {currentItemIndex && itemCount > 1
+                ? `Menghapus ${currentItemIndex}/${itemCount} (${activePercent}%)`
+                : isDone
+                  ? `Penghapusan Selesai (${activePercent}%)`
+                  : `Menghapus ${itemCount} Item (${activePercent}%)`}
+            </span>
           </div>
-          <span className="text-xs font-bold text-slate-200">
-            {currentItemIndex && itemCount > 1
-              ? `Menghapus ${currentItemIndex}/${itemCount} (${activePercent}%)`
-              : isDone
-                ? `Penghapusan Selesai (${activePercent}%)`
-                : `Menghapus ${itemCount} Item (${activePercent}%)`}
-          </span>
-          <ChevronUp className="w-4 h-4 text-slate-400 group-hover:text-white transition" />
+          <ChevronUp className="w-4 h-4 text-slate-400 group-hover:text-white transition flex-shrink-0" />
         </button>
       ) : (
         /* Expanded Floating Card Popup */
-        <div className="w-80 sm:w-96 rounded-2xl glass-card border border-rose-500/40 p-4 space-y-3.5 shadow-2xl backdrop-blur-xl relative bg-slate-950/90">
+        <div className="w-[90vw] max-w-lg sm:w-[480px] rounded-2xl glass-card border border-rose-500/40 p-4 sm:p-5 space-y-3.5 shadow-2xl backdrop-blur-xl relative bg-slate-950/90">
           {/* Header */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8.5 h-8.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 flex-shrink-0">
                 {isDone ? (
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 ) : (
                   <Trash2 className="w-4 h-4 text-rose-400 animate-pulse" />
                 )}
               </div>
-              <div>
+              <div className="min-w-0">
                 <h4 className="text-xs font-extrabold text-white">Proses Penghapusan Berkas</h4>
-                <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 truncate">
                   <AlertCircle className="w-3 h-3 text-rose-400 inline flex-shrink-0" />
-                  <span>Membersihkan dari Google Drive & Database</span>
+                  <span className="truncate">Membersihkan data</span>
                 </p>
               </div>
             </div>
 
             <button
               onClick={() => setIsMinimized(true)}
-              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition cursor-pointer"
+              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition cursor-pointer flex-shrink-0"
               title="Kecilkan (Minimize)"
             >
               <ChevronDown className="w-4 h-4" />
@@ -85,7 +87,7 @@ export const BackgroundDeleteWidget: React.FC<BackgroundDeleteWidgetProps> = ({
           {/* Live Progress Bar & Status */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-[11px] font-semibold">
-              <span className="text-slate-300 flex items-center gap-1.5 truncate max-w-[200px]">
+              <span className="text-slate-300 flex items-center gap-1.5 truncate max-w-[300px]">
                 <Trash2 className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
                 <span>
                   {currentItemIndex && itemCount > 1
@@ -125,7 +127,6 @@ export const BackgroundDeleteWidget: React.FC<BackgroundDeleteWidgetProps> = ({
           {/* Footer Note */}
           <div className="flex items-center justify-between pt-1 border-t border-slate-800/60 text-[10px] text-slate-400">
             <span>Mohon tunggu hingga proses selesai</span>
-            <span className="text-rose-400 font-semibold">PrivateBox Sync</span>
           </div>
         </div>
       )}

@@ -198,7 +198,7 @@ export const Dashboard: React.FC = () => {
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     title: string;
-    message: string;
+    message: React.ReactNode;
     onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => { } });
 
@@ -207,6 +207,7 @@ export const Dashboard: React.FC = () => {
     title: string;
     label?: string;
     initialValue?: string;
+    confirmText?: string;
     onConfirm: (val: string) => void;
   }>({ isOpen: false, title: '', initialValue: '', onConfirm: () => { } });
 
@@ -397,7 +398,7 @@ export const Dashboard: React.FC = () => {
   };
 
   const usedBytes = Number(userInfo?.storageUsed || 0);
-  const limitBytes = Number(userInfo?.storageLimit || import.meta.env.VITE_FREE_USER_QUOTA_BYTES || 10737418240);
+  const limitBytes = Math.max(Number(userInfo?.storageLimit || 0), Number(import.meta.env.VITE_FREE_USER_QUOTA_BYTES || 21474836480));
   const quotaPercent = Math.min(100, (usedBytes / limitBytes) * 100);
   const daysLeft = getDaysRemaining(userInfo?.expiresAt);
 
@@ -678,7 +679,14 @@ export const Dashboard: React.FC = () => {
                     setConfirmModal({
                       isOpen: true,
                       title: 'Hapus Item Terpilih',
-                      message: `Apakah Anda yakin ingin menghapus ${total} item yang dipilih (${selectedFolderIds.length} folder, ${selectedFileIds.length} file)? Tindakan ini tidak dapat dibatalkan.`,
+                      message: (
+                        <div className="space-y-2">
+                          <p>Apakah Anda yakin ingin menghapus <strong className="text-white font-semibold">{total} item</strong> yang dipilih ({selectedFolderIds.length} folder, {selectedFileIds.length} file)?</p>
+                          <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-2">
+                            <span>⚠️ Semua item terpilih yang dihapus tidak dapat dikembalikan.</span>
+                          </div>
+                        </div>
+                      ),
                       onConfirm: async () => {
                         setConfirmModal((prev) => ({ ...prev, isOpen: false }));
                         executeDeleteWithProgress(
@@ -694,7 +702,14 @@ export const Dashboard: React.FC = () => {
                     setConfirmModal({
                       isOpen: true,
                       title: 'Hapus Folder',
-                      message: `Apakah Anda yakin ingin menghapus folder "${name || 'ini'}" beserta seluruh isinya? Tindakan ini tidak dapat dibatalkan.`,
+                      message: (
+                        <div className="space-y-2">
+                          <p>Apakah Anda yakin ingin menghapus folder <strong className="text-white font-semibold">"{name || 'ini'}"</strong> beserta seluruh isinya?</p>
+                          <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-2">
+                            <span>⚠️ Folder yang dihapus tidak dapat dikembalikan.</span>
+                          </div>
+                        </div>
+                      ),
                       onConfirm: async () => {
                         setConfirmModal((prev) => ({ ...prev, isOpen: false }));
                         executeDeleteWithProgress(
@@ -712,6 +727,7 @@ export const Dashboard: React.FC = () => {
                       title: 'Ubah Nama Folder',
                       label: 'Masukkan nama folder baru:',
                       initialValue: currentName || '',
+                      confirmText: 'Simpan Nama',
                       onConfirm: async (newName) => {
                         setPromptModal((prev) => ({ ...prev, isOpen: false }));
                         try {
@@ -728,7 +744,14 @@ export const Dashboard: React.FC = () => {
                     setConfirmModal({
                       isOpen: true,
                       title: 'Hapus File',
-                      message: `Apakah Anda yakin ingin menghapus file "${name || 'ini'}" dari Google Drive Storage?`,
+                      message: (
+                        <div className="space-y-2">
+                          <p>Apakah Anda yakin ingin menghapus file <strong className="text-white font-semibold">"{name || 'ini'}"</strong></p>
+                          <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-2">
+                            <span>⚠️ File yang dihapus tidak dapat dikembalikan.</span>
+                          </div>
+                        </div>
+                      ),
                       onConfirm: async () => {
                         setConfirmModal((prev) => ({ ...prev, isOpen: false }));
                         executeDeleteWithProgress(

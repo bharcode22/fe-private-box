@@ -307,7 +307,14 @@ export const AccessLogsTable: React.FC<AccessLogsTableProps> = ({ logs, onRefres
       <ConfirmModal
         isOpen={deleteConfirmState.isOpen}
         title="Hapus Link Pembagian"
-        message={`Apakah Anda yakin ingin menghapus link pembagian "${deleteConfirmState.code}"? Semua izin pengunduhan akan dicabut dan log pembagian akan dibersihkan.`}
+        message={(
+          <div className="space-y-2">
+            <p>Apakah Anda yakin ingin menghapus link pembagian <strong className="text-white font-semibold">"{deleteConfirmState.code}"</strong>?</p>
+            <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-2">
+              <span>⚠️ Penerima tidak akan dapat mengunduh file ini lagi.</span>
+            </div>
+          </div>
+        )}
         confirmText="Ya, Hapus Link"
         cancelText="Batal"
         isDanger={true}

@@ -102,13 +102,13 @@ export const Terms: React.FC = () => {
               <h3 className="font-bold text-white text-base">Aturan Penggunaan Akun Gratis:</h3>
               <ul className="list-disc pl-5 space-y-2 text-slate-400">
                 <li>
-                  <strong className="text-slate-200">Kuota Penyimpanan:</strong> Setiap pengguna gratis mendapatkan batas alokasi kapasitas maksimal <strong className="text-indigo-400">10 GB</strong>.
+                  <strong className="text-slate-200">Kuota Penyimpanan:</strong> Setiap pengguna gratis mendapatkan batas alokasi kapasitas maksimal <strong className="text-indigo-400">20 GB</strong>.
                 </li>
                 <li>
-                  <strong className="text-slate-200">Masa Aktif Akun:</strong> Akun gratis aktif selama <strong className="text-indigo-400">30 hari</strong> sejak tanggal pertama kali pendaftaran.
+                  <strong className="text-slate-200">Masa Aktif Akun:</strong> Akun gratis aktif selama <strong className="text-indigo-400">5 bulan (150 hari)</strong> sejak tanggal pertama kali pendaftaran.
                 </li>
                 <li>
-                  <strong className="text-slate-200">Masa Kedaluwarsa:</strong> Setelah lewat dari 30 hari, status akun akan berubah menjadi <span className="text-amber-400 font-semibold">READ_ONLY / EXPIRED</span>. Pengguna tidak dapat mengunggah file baru dan hanya dapat mengunduh file lama selama masa tenggang.
+                  <strong className="text-slate-200">Masa Kedaluwarsa:</strong> Setelah lewat dari 5 bulan (150 hari), status akun akan berubah menjadi <span className="text-amber-400 font-semibold">READ_ONLY / EXPIRED</span>. Pengguna tidak dapat mengunggah file baru dan hanya dapat mengunduh file lama selama masa tenggang.
                 </li>
                 <li>
                   <strong className="text-slate-200">Pembagian File:</strong> Pembagian file menggunakan kode unik acak. Setiap pengaksesan/pengunduhan file akan dicatat ke dalam log akses (Email pengunduh & timestamp).

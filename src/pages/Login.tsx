@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, HardDrive, Users, ArrowRight, Sparkles, AlertCircle } from 'lucide-react';
+import { ShieldCheck, HardDrive, Users, ArrowRight, Sparkles, AlertCircle, Smartphone, Clock, Download } from 'lucide-react';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import api from '../services/api';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
+import appAndPlayImg from '../assets/appandplay.png';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -98,11 +99,11 @@ export const Login: React.FC = () => {
           </div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
-            Penyimpanan File Privat Kuota <span className="gradient-text">10 GB Gratis</span>
+            Penyimpanan File Temporary Privat Kuota <span className="gradient-text">20 GB Gratis</span>
           </h1>
 
           <p className="text-slate-400 text-base sm:text-lg leading-relaxed max-w-2xl">
-            Solusi SaaS terpadu penggabungan akun Google Drive dengan tingkat keamanan tinggi. Batas kuota 10 GB per penggunanya selama 30 hari pertama, pembagian file via kode unik acak, dan pencatatan log akses yang transparan.
+            Batas kuota 20 GB per penggunanya selama 5 bulan, pembagian file via kode unik, dan pencatatan log akses yang anonim.
           </p>
 
           {/* Slot Capacity Live Meter */}
@@ -110,7 +111,7 @@ export const Login: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-slate-300 text-xs sm:text-sm font-semibold">
                 <Users className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400 flex-shrink-0" />
-                <span>Status Slot Pengguna Gratis (Maks {slotInfo?.totalSlots || 100} User)</span>
+                <span>Status Slot Pengguna (Maks {slotInfo?.totalSlots || 200} User)</span>
               </div>
               <span className={`self-start sm:self-auto text-[11px] sm:text-xs font-bold px-2.5 py-0.5 sm:py-1 rounded-full ${slotInfo?.isFull ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
                 {slotInfo?.isFull ? 'Tutup / Penuh' : 'Slot Tersedia'}
@@ -164,12 +165,50 @@ export const Login: React.FC = () => {
         {/* Feature Cards Showcase */}
         <div className="lg:col-span-5 space-y-4">
           <div className="p-6 rounded-2xl glass-card border border-slate-800 hover:border-indigo-500/50 transition duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                <Smartphone className="w-6 h-6" />
+              </div>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                <Clock className="w-3.5 h-3.5" /> Coming Soon
+              </span>
+            </div>
+
+            <h3 className="text-lg font-bold text-white mb-2">Aplikasi Mobile (Android & iOS)</h3>
+            <p className="text-slate-400 text-sm mb-4 leading-relaxed">
+              Download APK resmi hanya melalui situs ini. Hati-hati dan jangan percaya jika ada pihak tidak resmi yang mengatasnamakan Temporary Box.
+            </p>
+
+            <div className="mb-4">
+              <button
+                disabled
+                className="w-full inline-flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-xl bg-slate-800/80 text-slate-500 cursor-not-allowed border border-slate-700/50 font-semibold text-sm select-none"
+              >
+                <Download className="w-4.5 h-4.5 text-slate-500" />
+                <span>Download APK Android (Belum Tersedia)</span>
+              </button>
+            </div>
+
+            <div className="pt-3 border-t border-slate-800/80 flex flex-col items-center gap-2">
+              <img
+                src={appAndPlayImg}
+                alt="Available on Google Play and App Store"
+                className="h-9 sm:h-10 w-auto object-contain opacity-60 filter grayscale hover:grayscale-0 hover:opacity-90 transition duration-300"
+              />
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-amber-400 bg-amber-500/10 border border-amber-500/25 px-2.5 py-0.5 rounded-full">
+                <Clock className="w-3 h-3" /> Coming Soon di Google Play & App Store
+              </span>
+            </div>
+
+          </div>
+
+          <div className="p-6 rounded-2xl glass-card border border-slate-800 hover:border-indigo-500/50 transition duration-300">
             <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 mb-4">
               <HardDrive className="w-6 h-6" />
             </div>
-            <h3 className="text-lg font-bold text-white mb-1">Direct Google Drive Storage</h3>
+            <h3 className="text-lg font-bold text-white mb-1">Direct Cloud Storage</h3>
             <p className="text-slate-400 text-sm">
-              Sistem backend terintegrasi langsung dengan Google Drive Cloud Storage (15 GB Cloud) secara aman dan transparan.
+              Sistem terintegrasi langsung dengan Cloud Storage (20 GB Cloud) secara aman.
             </p>
           </div>
 
@@ -177,9 +216,9 @@ export const Login: React.FC = () => {
             <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 mb-4">
               <ShieldCheck className="w-6 h-6" />
             </div>
-            <h3 className="text-lg font-bold text-white mb-1">Bagi File via Kode Unik & Log</h3>
+            <h3 className="text-lg font-bold text-white mb-1">Bagi File Via Kode Unik & Private</h3>
             <p className="text-slate-400 text-sm">
-              Bagikan file dengan kode acak unik. Setiap pengunduh wajib memasukkan email dan waktunya dicatat di log secara akurat.
+              Bagikan file dengan kode unik. Setiap pengunduh opsional memasukkan email dan waktunya dicatat di log secara akurat.
             </p>
           </div>
         </div>
