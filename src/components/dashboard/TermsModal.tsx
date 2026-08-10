@@ -15,6 +15,7 @@ interface TermsModalProps {
   isOpen: boolean;
   onSuccess: (updatedUser?: any) => void;
   onCancel?: () => void;
+  readOnly?: boolean;
 }
 
 const renderMarkdown = (text: string) => {
@@ -134,7 +135,12 @@ const getMarkdownContent = (terms: TermsData | null): string => {
   return terms.content || terms.title || '';
 };
 
-export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onSuccess, onCancel }) => {
+export const TermsModal: React.FC<TermsModalProps> = ({
+  isOpen,
+  onSuccess,
+  onCancel,
+  readOnly = false,
+}) => {
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetchingTerms, setFetchingTerms] = useState(true);
@@ -217,9 +223,11 @@ export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onSuccess, onCan
             </div>
           </div>
 
-          <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 whitespace-nowrap flex-shrink-0">
-            Persetujuan Wajib
-          </span>
+          {!readOnly && (
+            <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 whitespace-nowrap flex-shrink-0">
+              Persetujuan Wajib
+            </span>
+          )}
         </div>
 
         {errorMsg && (
@@ -301,87 +309,105 @@ export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onSuccess, onCan
           )}
         </div>
 
-        <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] sm:text-xs flex items-start gap-2 sm:gap-2.5 leading-relaxed">
-          <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-          <span>
-            Persetujuan wajib: Anda tidak dapat mengakses sistem, mengunggah, maupun mengunduh berkas sebelum menyetujui ketentuan ini.
-          </span>
-        </div>
+        {!readOnly && (
+          <>
+            <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] sm:text-xs flex items-start gap-2 sm:gap-2.5 leading-relaxed">
+              <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+              <span>
+                Persetujuan wajib: Anda tidak dapat mengakses sistem, mengunggah, maupun mengunduh berkas sebelum menyetujui ketentuan ini.
+              </span>
+            </div>
 
-        {/* Interactive Glassmorphic Agreement Card */}
-        <label
-          className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border transition-all duration-300 flex items-start gap-3 cursor-pointer group select-none ${agreed
-            ? 'bg-indigo-950/40 border-indigo-500/60 shadow-lg shadow-indigo-500/10 ring-2 ring-indigo-500/30'
-            : 'bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900/90'
-            }`}
-        >
-          <div className="relative flex items-center justify-center mt-0.5 flex-shrink-0">
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={(e) => setAgreed(e.target.checked)}
-              disabled={loading}
-              className="sr-only"
-            />
-            <div
-              className={`w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-lg border transition-all flex items-center justify-center ${agreed
-                ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 border-indigo-400 shadow-md shadow-indigo-500/40 scale-105'
-                : 'bg-slate-950 border-slate-700 group-hover:border-slate-500'
+            <label
+              className={`p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border transition-all duration-300 flex items-start gap-3 sm:gap-4 cursor-pointer group select-none ${agreed
+                ? 'bg-indigo-950/40 border-indigo-500/60 shadow-lg shadow-indigo-500/10 ring-2 ring-indigo-500/30'
+                : 'bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900/90'
                 }`}
             >
-              {agreed && <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white stroke-[3]" />}
-            </div>
-          </div>
+              <div className="relative flex items-center justify-center mt-0.5 sm:mt-1 flex-shrink-0">
+                <input
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={(e) => setAgreed(e.target.checked)}
+                  disabled={loading}
+                  className="sr-only"
+                />
+                <div
+                  className={`w-5 h-5 sm:w-6 sm:h-6 rounded-lg sm:rounded-xl border transition-all flex items-center justify-center ${agreed
+                    ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 border-indigo-400 shadow-md shadow-indigo-500/40 scale-105'
+                    : 'bg-slate-950 border-slate-700 group-hover:border-slate-500'
+                    }`}
+                >
+                  {agreed && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white stroke-[3]" />}
+                </div>
+              </div>
 
-          <div className="space-y-0.5 sm:space-y-1 min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <span className={`text-[11px] sm:text-xs font-bold transition-colors ${agreed ? 'text-indigo-300' : 'text-slate-300 group-hover:text-white'}`}>
-                Konfirmasi Persetujuan Pengguna
-              </span>
-              <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                Wajib
-              </span>
-            </div>
-            <p className={`text-[10px] sm:text-xs leading-relaxed transition-colors ${agreed ? 'text-slate-200' : 'text-slate-400 group-hover:text-slate-300'} break-words`}>
-              Saya telah membaca, memahami, dan menyetujui seluruh Syarat & Ketentuan Penggunaan Akun di atas.
-            </p>
-          </div>
-        </label>
+              <div className="space-y-1 sm:space-y-1.5 min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                  <span className={`text-xs sm:text-sm font-bold transition-colors ${agreed ? 'text-indigo-300' : 'text-slate-300 group-hover:text-white'}`}>
+                    Centang untuk setuju
+                  </span>
+                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    Wajib
+                  </span>
+                </div>
+                <p className={`text-[11px] sm:text-xs leading-relaxed transition-colors ${agreed ? 'text-slate-200' : 'text-slate-400 group-hover:text-slate-300'} break-words`}>
+                  Saya telah membaca, memahami, dan menyetujui seluruh Syarat & Ketentuan Penggunaan Akun di atas.
+                </p>
+              </div>
+            </label>
+          </>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 pt-0.5">
-          <button
-            type="button"
-            onClick={handleDecline}
-            disabled={loading}
-            className="w-full sm:w-auto px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-slate-800 hover:border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
-            title="Keluar dari sistem jika menolak"
-          >
-            <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-500" />
-            <span>Keluar Akun</span>
-          </button>
+          {readOnly ? (
+            <button
+              type="button"
+              onClick={() => {
+                if (onCancel) onCancel();
+                else onSuccess(); // Fallback
+              }}
+              className="w-full py-3.5 rounded-xl sm:rounded-2xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-white text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+            >
+              Tutup
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={handleDecline}
+                disabled={loading}
+                className="w-full sm:w-auto px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-slate-800 hover:border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
+                title="Keluar dari sistem jika menolak"
+              >
+                <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-500" />
+                <span>Keluar Akun</span>
+              </button>
 
-          <button
-            type="button"
-            onClick={handleProceed}
-            disabled={!agreed || loading}
-            className={`w-full sm:flex-1 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all duration-200 ${agreed && !loading
-              ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-xl shadow-indigo-600/30 cursor-pointer active:scale-[0.99]'
-              : 'bg-slate-900 text-slate-600 cursor-not-allowed border border-slate-800'
-              }`}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-indigo-300" />
-                <span>Menyimpan Persetujuan...</span>
-              </>
-            ) : (
-              <>
-                <span>Setujui & Masuk Sistem</span>
-                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              </>
-            )}
-          </button>
+              <button
+                type="button"
+                onClick={handleProceed}
+                disabled={!agreed || loading}
+                className={`w-full sm:flex-1 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all duration-200 ${agreed && !loading
+                  ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-xl shadow-indigo-600/30 cursor-pointer active:scale-[0.99]'
+                  : 'bg-slate-900 text-slate-600 cursor-not-allowed border border-slate-800'
+                  }`}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-indigo-300" />
+                    <span>Menyimpan Persetujuan...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Setujui & Masuk Sistem</span>
+                    <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  </>
+                )}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>,

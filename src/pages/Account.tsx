@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { User, ShieldCheck, ArrowLeft, RotateCw, LogOut } from 'lucide-react';
+import { User, ShieldCheck, ArrowLeft, RotateCw, LogOut, UserX } from 'lucide-react';
 import api from '../services/api';
 import { Navbar } from '../components/layout/Navbar';
 import { AccountStatusCards } from '../components/dashboard/AccountStatusCards';
 import { CardSkeleton } from '../components/common/SkeletonLoader';
+import { ConfirmModal } from '../components/common/Popups';
 import { Footer } from '../components/layout/Footer';
 import { MobileBottomNav } from '../components/layout/MobileBottomNav';
 import { TermsModal } from '../components/dashboard/TermsModal';
@@ -26,6 +27,13 @@ export const Account: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
+  const [isReadOnlyTermsOpen, setIsReadOnlyTermsOpen] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: React.ReactNode;
+    onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   useEffect(() => {
     const savedUser = getStoredUser();
@@ -66,6 +74,32 @@ export const Account: React.FC = () => {
   const handleLogout = () => {
     clearAuth();
     navigate('/', { replace: true });
+  };
+
+  const handleDeleteAccount = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Hapus Akun Permanen',
+      message: (
+        <div className="space-y-2">
+          <p>Apakah Anda yakin ingin menghapus akun Anda secara permanen?</p>
+          <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs font-semibold flex items-center gap-2">
+            <span>⚠️ Semua file, folder, dan riwayat akses Anda akan terhapus dari sistem dan tidak dapat dikembalikan.</span>
+          </div>
+        </div>
+      ),
+      onConfirm: async () => {
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        try {
+          await api.delete('/api/auth/account');
+          clearAuth();
+          navigate('/', { replace: true });
+        } catch (err: any) {
+          console.error('Delete account error:', err);
+          alert(err.response?.data?.error || 'Gagal menghapus akun');
+        }
+      },
+    });
   };
 
   const handleBack = () => {
@@ -158,14 +192,30 @@ export const Account: React.FC = () => {
           )}
         </div>
 
-        {/* Single Logout Button Section at the Very Bottom */}
-        <div className="pt-6 border-t border-slate-800/80 flex justify-center">
+        {/* Account Actions Section */}
+        <div className="pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row justify-center gap-4">
+          <button
+            onClick={() => setIsReadOnlyTermsOpen(true)}
+            className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-indigo-900/20 hover:bg-indigo-900/40 text-indigo-300 hover:text-white border border-indigo-500/30 text-sm font-bold transition flex items-center justify-center gap-2.5 cursor-pointer active:scale-95"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>Syarat & Ketentuan</span>
+          </button>
+          
           <button
             onClick={handleLogout}
-            className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-rose-600/15 hover:bg-rose-600/30 text-rose-300 hover:text-rose-200 border border-rose-500/30 text-sm font-bold transition flex items-center justify-center gap-2.5 cursor-pointer shadow-lg shadow-rose-950/30 active:scale-95"
+            className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-slate-800/50 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/50 text-sm font-bold transition flex items-center justify-center gap-2.5 cursor-pointer active:scale-95"
           >
             <LogOut className="w-4 h-4" />
             <span>Keluar dari Akun</span>
+          </button>
+          
+          <button
+            onClick={handleDeleteAccount}
+            className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-red-600/15 hover:bg-red-600/30 text-red-400 hover:text-red-300 border border-red-500/30 text-sm font-bold transition flex items-center justify-center gap-2.5 cursor-pointer shadow-lg shadow-red-950/30 active:scale-95"
+          >
+            <UserX className="w-4 h-4" />
+            <span>Hapus Akun Permanen</span>
           </button>
         </div>
       </main>
@@ -199,6 +249,23 @@ export const Account: React.FC = () => {
           clearAuth();
           navigate('/');
         }}
+      />
+
+      {/* ReadOnly Terms Modal */}
+      <TermsModal
+        isOpen={isReadOnlyTermsOpen}
+        readOnly={true}
+        onSuccess={() => setIsReadOnlyTermsOpen(false)}
+        onCancel={() => setIsReadOnlyTermsOpen(false)}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
       />
     </div>
   );
