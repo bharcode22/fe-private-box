@@ -96,7 +96,7 @@ export const useFileUpload = () => {
     formData.append('jobId', uploadJobId);
 
     const token = localStorage.getItem('pb_token');
-    const apiBaseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+    const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
     const sseUrl = `${apiBaseUrl}/api/files/upload-progress/${uploadJobId}?token=${token}`;
 
     try {
