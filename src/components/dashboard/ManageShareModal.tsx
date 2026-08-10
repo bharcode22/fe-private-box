@@ -274,16 +274,19 @@ export const ManageShareModal: React.FC<ManageShareModalProps> = ({
           </div>
 
           {/* Expiration Date */}
-          <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-1.5">
+          <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-1.5 min-w-0">
             <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-purple-400" /> Tanggal Kadaluarsa (Opsional)
             </label>
-            <input
-              type="date"
-              value={expiresAt}
-              onChange={(e) => setExpiresAt(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 focus:border-purple-500 text-white text-xs focus:outline-none"
-            />
+            <div className="w-full min-w-0">
+              <input
+                type="date"
+                value={expiresAt}
+                onChange={(e) => setExpiresAt(e.target.value)}
+                style={{ minWidth: 0, width: '100%', WebkitAppearance: 'none', boxSizing: 'border-box' }}
+                className="w-full max-w-full min-w-0 block box-border px-3 sm:px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 focus:border-purple-500 text-white text-xs focus:outline-none appearance-none min-h-[42px] font-sans"
+              />
+            </div>
           </div>
 
           {/* Consistent Responsive Footer Action Bar */}
