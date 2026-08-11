@@ -206,7 +206,7 @@ export const TermsModal: React.FC<TermsModalProps> = ({
       {/* Background Ambient Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[550px] aspect-square bg-indigo-600/15 rounded-full blur-3xl pointer-events-none"></div>
 
-      <div className="max-w-2xl w-full min-w-0 max-w-full glass-card p-4 sm:p-7 rounded-2xl sm:rounded-3xl border border-slate-800 shadow-2xl space-y-3.5 sm:space-y-5 relative my-auto box-border">
+      <div className="max-w-2xl w-full min-w-0 glass-card p-4 sm:p-7 rounded-2xl sm:rounded-3xl border border-slate-800 shadow-2xl space-y-3.5 sm:space-y-5 relative my-auto box-border">
         {/* Modal Header */}
         <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -314,7 +314,7 @@ export const TermsModal: React.FC<TermsModalProps> = ({
             <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] sm:text-xs flex items-start gap-2 sm:gap-2.5 leading-relaxed">
               <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 flex-shrink-0 mt-0.5" />
               <span>
-                Persetujuan wajib: Anda tidak dapat mengakses sistem, mengunggah, maupun mengunduh berkas sebelum menyetujui ketentuan ini.
+                Persetujuan wajib: Anda tidak dapat mengakses sistem sebelum menyetujui syarat dan ketentuan.
               </span>
             </div>
 

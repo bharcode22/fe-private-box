@@ -33,7 +33,7 @@ export const Account: React.FC = () => {
     title: string;
     message: React.ReactNode;
     onConfirm: () => void;
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => { } });
 
   useEffect(() => {
     const savedUser = getStoredUser();
@@ -201,21 +201,21 @@ export const Account: React.FC = () => {
             <ShieldCheck className="w-4 h-4" />
             <span>Syarat & Ketentuan</span>
           </button>
-          
+
           <button
             onClick={handleLogout}
             className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-slate-800/50 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/50 text-sm font-bold transition flex items-center justify-center gap-2.5 cursor-pointer active:scale-95"
           >
             <LogOut className="w-4 h-4" />
-            <span>Keluar dari Akun</span>
+            <span>Keluar / Logout </span>
           </button>
-          
+
           <button
             onClick={handleDeleteAccount}
             className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-red-600/15 hover:bg-red-600/30 text-red-400 hover:text-red-300 border border-red-500/30 text-sm font-bold transition flex items-center justify-center gap-2.5 cursor-pointer shadow-lg shadow-red-950/30 active:scale-95"
           >
-            <UserX className="w-4 h-4" />
-            <span>Hapus Akun Permanen</span>
+            <User className="w-4 h-4" />
+            <span>Hapus Akun</span>
           </button>
         </div>
       </main>
