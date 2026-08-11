@@ -8,19 +8,24 @@ import { AccessFile } from './pages/AccessFile';
 
 import { GOOGLE_CLIENT_ID } from './constants/config';
 
+import { GlobalProgressProvider } from './contexts/GlobalProgressContext';
+
 export const App: React.FC = () => {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/account" element={<Account />} />
-          <Route path="/share" element={<AccessFile />} />
-        </Routes>
-      </Router>
+      <GlobalProgressProvider>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/account" element={<Account />} />
+            <Route path="/share" element={<AccessFile />} />
+          </Routes>
+        </Router>
+      </GlobalProgressProvider>
     </GoogleOAuthProvider>
   );
 };
 
 export default App;
+

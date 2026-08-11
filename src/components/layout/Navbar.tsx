@@ -4,27 +4,22 @@ import { HardDrive, Lock, LogOut, User } from 'lucide-react';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import api from '../../services/api';
 import { setToken, setStoredUser } from '../../utils/auth';
+import { useGlobalProgress } from '../../contexts/GlobalProgressContext';
 
 interface NavbarProps {
   user?: { name?: string; email?: string } | null;
   onLogout?: () => void;
   showShareButton?: boolean;
-  uploading?: boolean;
-  uploadProgress?: number;
-  deleting?: boolean;
-  deleteProgress?: number;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   user,
   onLogout,
   showShareButton = true,
-  uploading = false,
-  uploadProgress = 0,
-  deleting = false,
-  deleteProgress = 0,
 }) => {
+  const { uploadState: { uploading, uploadProgress }, deleting, deleteProgress } = useGlobalProgress();
   const location = useLocation();
+
   const navigate = useNavigate();
   const currentPathWithSearch = location.pathname + location.search;
   const dashboardLink = user ? `/dashboard` : '/';

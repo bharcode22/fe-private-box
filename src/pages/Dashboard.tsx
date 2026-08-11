@@ -4,8 +4,6 @@ import { FileText, Activity, UploadCloud, RotateCw, Home, ChevronRight, Folder, 
 import api from '../services/api';
 import { Navbar } from '../components/layout/Navbar';
 import { UploadFileModal } from '../components/dashboard/UploadFileModal';
-import { BackgroundUploadWidget } from '../components/dashboard/BackgroundUploadWidget';
-import { BackgroundDeleteWidget } from '../components/dashboard/BackgroundDeleteWidget';
 import { TableSkeleton } from '../components/common/SkeletonLoader';
 import { FileListTable } from '../components/dashboard/FileListTable';
 import { FileListToolbar } from '../components/dashboard/FileListToolbar';
@@ -19,7 +17,7 @@ import { formatBytes } from '../utils/formatters';
 import { getDaysRemaining } from '../utils/dateUtils';
 import { downloadService } from '../services/downloadService';
 import { shareService } from '../services/shareService';
-import { useFileUpload } from '../hooks/useFileUpload';
+import { useGlobalProgress } from '../contexts/GlobalProgressContext';
 import { MobileFAB } from '../components/dashboard/MobileFAB';
 import { FileActionBottomSheet } from '../components/dashboard/FileActionBottomSheet';
 import { MobileBottomNav } from '../components/layout/MobileBottomNav';
@@ -103,29 +101,24 @@ export const Dashboard: React.FC = () => {
     isOpen: false,
   });
 
-  // Custom Upload Hook encapsulation
+  // Global Progress Context
   const {
-    selectedFiles,
-    setSelectedFiles,
-    uploading,
-    uploadProgress,
-    uploadFileCount,
-    uploadTargetFolderName,
-    currentFileIndex,
-    currentFileName,
-    fileProgressPercent,
-    statusMessage,
-    handleFileUpload: uploadHandler,
-    handleCancelUpload: cancelUploadHandler,
-  } = useFileUpload();
-
-  // Live Delete Progress Loading State
-  const [deleting, setDeleting] = useState(false);
-  const [deleteProgress, setDeleteProgress] = useState(0);
-  const [deleteItemCount, setDeleteItemCount] = useState(0);
-  const [deleteCurrentIndex, setDeleteCurrentIndex] = useState(0);
-  const [deleteCurrentName, setDeleteCurrentName] = useState('');
-  const [deleteStatusMessage, setDeleteStatusMessage] = useState('');
+    uploadState: {
+      selectedFiles,
+      setSelectedFiles,
+      uploading,
+      uploadProgress,
+      handleFileUpload: uploadHandler,
+      handleCancelUpload: cancelUploadHandler,
+    },
+    deleting,
+    setDeleting,
+    setDeleteProgress,
+    setDeleteItemCount,
+    setDeleteCurrentIndex,
+    setDeleteCurrentName,
+    setDeleteStatusMessage,
+  } = useGlobalProgress();
 
   useEffect(() => {
     if (!deleting) {
@@ -439,10 +432,6 @@ export const Dashboard: React.FC = () => {
       <Navbar
         user={user}
         onLogout={handleLogout}
-        uploading={uploading}
-        uploadProgress={uploadProgress}
-        deleting={deleting}
-        deleteProgress={deleteProgress}
       />
 
       {/* Main Dashboard Content */}
@@ -881,28 +870,7 @@ export const Dashboard: React.FC = () => {
         onCancel={() => setPromptModal((prev) => ({ ...prev, isOpen: false }))}
       />
 
-      {/* Floating Background Upload Progress Widget */}
-      <BackgroundUploadWidget
-        uploading={uploading}
-        uploadProgress={uploadProgress}
-        fileCount={uploadFileCount}
-        currentFileIndex={currentFileIndex}
-        currentFileName={currentFileName}
-        fileProgressPercent={fileProgressPercent}
-        statusMessage={statusMessage}
-        targetFolderName={uploadTargetFolderName}
-        onCancelUpload={handleCancelUpload}
-      />
 
-      {/* Floating Background Delete Progress Widget */}
-      <BackgroundDeleteWidget
-        deleting={deleting}
-        deleteProgress={deleteProgress}
-        itemCount={deleteItemCount}
-        currentItemIndex={deleteCurrentIndex}
-        currentItemName={deleteCurrentName}
-        statusMessage={deleteStatusMessage}
-      />
       {/* Floating Action Button (FAB) Khusus Mobile */}
       <MobileFAB
         onUploadClick={() => setIsUploadModalOpen(true)}
