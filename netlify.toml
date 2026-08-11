@@ -14,7 +14,7 @@
 # Ini akan mengarahkan semua request '/api/...' dari frontend ke backend aslinya.
 [[redirects]]
   from = "/api/*"
-  to = "https://passing-reactions-providing-tender.trycloudflare.com/:splat"
+  to = "https://passing-reactions-providing-tender.trycloudflare.com/api/:splat"
   status = 200
   force = true
 
