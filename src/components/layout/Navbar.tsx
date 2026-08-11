@@ -23,8 +23,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const location = useLocation();
   const currentPathWithSearch = location.pathname + location.search;
-  const lastDashboardSearch = sessionStorage.getItem('pb_last_dashboard_search') || '';
-  const dashboardLink = user ? `/dashboard${lastDashboardSearch}` : '/';
+  const dashboardLink = user ? `/dashboard` : '/';
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-md w-full">

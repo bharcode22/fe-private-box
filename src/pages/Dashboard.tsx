@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FileText, Activity, UploadCloud, RotateCw, Home, ChevronRight, Folder, Search, X, Image, Video, Music, FileQuestion } from 'lucide-react';
 import api from '../services/api';
 import { Navbar } from '../components/layout/Navbar';
@@ -178,32 +178,25 @@ export const Dashboard: React.FC = () => {
 
   const [shareModal, setShareModal] = useState<{ id: string; name: string; type: 'file' | 'folder'; code?: string; isActive?: boolean } | null>(null);
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get('tab') === 'logs' ? 'logs' : 'files') as 'files' | 'logs';
-  const currentFolderId = searchParams.get('folderId') || null;
+  const [activeTab, setActiveTabState] = useState<'files' | 'logs'>(
+    () => (sessionStorage.getItem('pb_active_tab') === 'logs' ? 'logs' : 'files')
+  );
+
+  const [currentFolderId, setCurrentFolderIdState] = useState<string | null>(
+    () => sessionStorage.getItem('pb_current_folder_id') || null
+  );
 
   useEffect(() => {
     if (currentFolderId) {
-      sessionStorage.setItem('pb_last_dashboard_search', `?folderId=${currentFolderId}`);
+      sessionStorage.setItem('pb_current_folder_id', currentFolderId);
     } else {
-      sessionStorage.removeItem('pb_last_dashboard_search');
+      sessionStorage.removeItem('pb_current_folder_id');
     }
   }, [currentFolderId]);
 
   const navigateToFolder = (folderId: string | null) => {
     setLoading(true);
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        if (folderId) {
-          next.set('folderId', folderId);
-        } else {
-          next.delete('folderId');
-        }
-        return next;
-      },
-      { replace: false }
-    );
+    setCurrentFolderIdState(folderId);
   };
 
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -232,18 +225,8 @@ export const Dashboard: React.FC = () => {
   };
 
   const setActiveTab = (tab: 'files' | 'logs') => {
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        if (tab === 'files') {
-          next.delete('tab');
-        } else {
-          next.set('tab', tab);
-        }
-        return next;
-      },
-      { replace: true }
-    );
+    setActiveTabState(tab);
+    sessionStorage.setItem('pb_active_tab', tab);
   };
 
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
@@ -1025,15 +1008,7 @@ export const Dashboard: React.FC = () => {
       {/* Mobile Bottom Navigation Bar */}
       <MobileBottomNav
         activeTab={activeTab}
-        onTabChange={(tab) => {
-          if (tab === 'logs') {
-            setSearchParams({ tab: 'logs' });
-          } else {
-            const currentParams = Object.fromEntries(searchParams.entries());
-            delete currentParams.tab;
-            setSearchParams(currentParams);
-          }
-        }}
+        onTabChange={setActiveTab}
       />
 
       {/* Terms & Conditions Blocking Modal */}

@@ -104,8 +104,7 @@ export const Account: React.FC = () => {
 
   const handleBack = () => {
     const stateFrom = location.state?.from;
-    const lastSearch = getLastSearch() || sessionStorage.getItem('pb_last_dashboard_search') || '';
-    const returnUrl = stateFrom || `/dashboard${lastSearch}`;
+    const returnUrl = stateFrom || `/dashboard`;
     navigate(returnUrl);
   };
 
@@ -227,12 +226,8 @@ export const Account: React.FC = () => {
       <MobileBottomNav
         activeTab="files"
         onTabChange={(tab) => {
-          const lastSearch = sessionStorage.getItem('pb_last_dashboard_search') || '';
-          if (tab === 'logs') {
-            navigate('/dashboard?tab=logs');
-          } else {
-            navigate(`/dashboard${lastSearch}`);
-          }
+          sessionStorage.setItem('pb_active_tab', tab);
+          navigate('/dashboard');
         }}
         user={user}
       />
