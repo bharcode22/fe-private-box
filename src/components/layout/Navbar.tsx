@@ -1,6 +1,9 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { HardDrive, Lock, LogOut, User } from 'lucide-react';
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
+import api from '../../services/api';
+import { setToken, setStoredUser } from '../../utils/auth';
 
 interface NavbarProps {
   user?: { name?: string; email?: string } | null;
@@ -22,8 +25,32 @@ export const Navbar: React.FC<NavbarProps> = ({
   deleteProgress = 0,
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const currentPathWithSearch = location.pathname + location.search;
   const dashboardLink = user ? `/dashboard` : '/';
+
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    if (!credentialResponse.credential) {
+      alert('Kredensial login Google tidak ditemukan.');
+      return;
+    }
+    try {
+      const res = await api.post('/api/auth/google', {
+        credential: credentialResponse.credential,
+      });
+      const data = res.data;
+      setToken(data.token);
+      setStoredUser(data.user);
+      
+      if (data.isNewUser) {
+        navigate('/terms', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Gagal memverifikasi login Google.');
+    }
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-md w-full">
@@ -84,15 +111,25 @@ export const Navbar: React.FC<NavbarProps> = ({
               </Link>
             </>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
               {showShareButton && (
                 <Link
                   to="/share"
-                  className="text-xs sm:text-sm font-medium text-slate-300 hover:text-white px-3 sm:px-4 py-2 rounded-xl border border-slate-800 hover:border-slate-700 transition flex items-center gap-1.5 sm:gap-2"
+                  className="hidden sm:flex text-xs sm:text-sm font-medium text-slate-300 hover:text-white px-3 sm:px-4 py-2 rounded-xl border border-slate-800 hover:border-slate-700 transition items-center gap-1.5 sm:gap-2"
                 >
                   <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-400" /> Unduh Kode
                 </Link>
               )}
+              <div className="overflow-hidden rounded-xl h-[38px] sm:h-[40px] hidden sm:flex items-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => alert('Login Google gagal atau dibatalkan')}
+                  theme="filled_blue"
+                  shape="pill"
+                  size="medium"
+                  text="signin_with"
+                />
+              </div>
             </div>
           )}
         </div>

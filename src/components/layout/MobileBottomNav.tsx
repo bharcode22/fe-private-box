@@ -17,7 +17,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   const isAccountPage = location.pathname === '/account';
 
   return (
-    <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-30 bg-slate-950/95 border-t border-slate-800/80 backdrop-blur-md px-4 py-2 flex items-center justify-around shadow-2xl">
+    <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-30 bg-slate-950/95 border-t border-slate-800/80 backdrop-blur-md px-4 py-2 flex items-center justify-around shadow-2xl touch-none">
       {/* Tab 1: File Saya */}
       <button
         type="button"

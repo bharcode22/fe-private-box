@@ -114,7 +114,11 @@ export const AccessLogsTable: React.FC<AccessLogsTableProps> = ({ logs, onRefres
           const downloadCount = log.downloadCount ?? (log.accessors ? log.accessors.length : 0);
 
           return (
-            <div key={log.id} className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg hover:border-slate-700/80 transition space-y-3">
+            <div
+              key={log.id}
+              onClick={() => log.share && handleOpenManageModal(log.share, fileName)}
+              className={`p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg hover:border-slate-700/80 transition space-y-3 ${log.share ? 'cursor-pointer' : ''}`}
+            >
               {/* Header: Title & Code Badge */}
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -160,7 +164,7 @@ export const AccessLogsTable: React.FC<AccessLogsTableProps> = ({ logs, onRefres
               <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-slate-800/80">
                 <button
                   type="button"
-                  onClick={() => handleOpenDetailModal(log)}
+                  onClick={(e) => { e.stopPropagation(); handleOpenDetailModal(log); }}
                   className="w-full justify-center inline-flex items-center px-2 py-2 text-xs font-semibold text-slate-300 bg-slate-800/90 hover:bg-slate-700 border border-slate-700/80 rounded-xl transition cursor-pointer active:scale-95 shadow-sm"
                   title="Lihat Detail Akses Email"
                 >
@@ -172,7 +176,7 @@ export const AccessLogsTable: React.FC<AccessLogsTableProps> = ({ logs, onRefres
                   <>
                     <button
                       type="button"
-                      onClick={() => handleOpenManageModal(log.share, fileName)}
+                      onClick={(e) => { e.stopPropagation(); handleOpenManageModal(log.share, fileName); }}
                       className="w-full justify-center inline-flex items-center px-2 py-2 text-xs font-semibold text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-xl transition cursor-pointer active:scale-95 shadow-sm"
                       title="Kelola Pengaturan Link Akses"
                     >
@@ -181,7 +185,7 @@ export const AccessLogsTable: React.FC<AccessLogsTableProps> = ({ logs, onRefres
                     </button>
                     <button
                       type="button"
-                      onClick={() => promptDeleteShareLink(log.share.id, code)}
+                      onClick={(e) => { e.stopPropagation(); promptDeleteShareLink(log.share.id, code); }}
                       className="w-full justify-center inline-flex items-center px-2 py-2 text-xs font-semibold text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded-xl transition cursor-pointer active:scale-95 shadow-sm"
                       title="Hapus Link Akses"
                     >
@@ -219,7 +223,11 @@ export const AccessLogsTable: React.FC<AccessLogsTableProps> = ({ logs, onRefres
               const downloadCount = log.downloadCount ?? (log.accessors ? log.accessors.length : 0);
 
               return (
-                <tr key={log.id} className="hover:bg-slate-900/40 transition">
+                <tr
+                  key={log.id}
+                  onClick={() => log.share && handleOpenManageModal(log.share, fileName)}
+                  className={`hover:bg-slate-900/40 transition ${log.share ? 'cursor-pointer' : ''}`}
+                >
                   <td className="px-6 py-4 font-semibold text-white truncate max-w-xs">{fileName}</td>
                   <td className="px-6 py-4">
                     <span className="font-mono bg-slate-900 px-2.5 py-1 rounded text-xs border border-slate-700 text-purple-300 font-bold">
@@ -256,7 +264,7 @@ export const AccessLogsTable: React.FC<AccessLogsTableProps> = ({ logs, onRefres
                   <td className="px-6 py-4 text-center">
                     <div className="flex items-center justify-center space-x-2">
                       <button
-                        onClick={() => handleOpenDetailModal(log)}
+                        onClick={(e) => { e.stopPropagation(); handleOpenDetailModal(log); }}
                         className="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-all cursor-pointer"
                         title="Lihat Daftar Email Pengunduh"
                       >
@@ -267,7 +275,7 @@ export const AccessLogsTable: React.FC<AccessLogsTableProps> = ({ logs, onRefres
                       {log.share && (
                         <>
                           <button
-                            onClick={() => handleOpenManageModal(log.share, fileName)}
+                            onClick={(e) => { e.stopPropagation(); handleOpenManageModal(log.share, fileName); }}
                             className="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-lg transition-all cursor-pointer"
                             title="Kelola Pengaturan Link Akses Ini"
                           >
@@ -275,7 +283,7 @@ export const AccessLogsTable: React.FC<AccessLogsTableProps> = ({ logs, onRefres
                             Kelola Link
                           </button>
                           <button
-                            onClick={() => promptDeleteShareLink(log.share.id, code)}
+                            onClick={(e) => { e.stopPropagation(); promptDeleteShareLink(log.share.id, code); }}
                             className="inline-flex items-center px-2.5 py-1.5 text-xs font-semibold text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-lg transition-all cursor-pointer"
                             title="Hapus Link & Cabut Semua Izin Pengunduhan"
                           >

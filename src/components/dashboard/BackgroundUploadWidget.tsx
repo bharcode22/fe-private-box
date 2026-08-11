@@ -32,36 +32,33 @@ export const BackgroundUploadWidget: React.FC<BackgroundUploadWidgetProps> = ({
   const activePercent = fileProgressPercent !== undefined && fileProgressPercent > 0 ? fileProgressPercent : uploadProgress;
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in slide-in-from-bottom-5 fade-in duration-300">
-      {isMinimized ? (
-        /* Minimized Floating Pill Badge */
+    <>
+      {!isMinimized && (
+        <div
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-30 animate-in fade-in duration-300"
+          onClick={() => setIsMinimized(true)}
+        />
+      )}
+      <div className={`fixed bottom-40 sm:bottom-6 z-40 animate-in slide-in-from-bottom-5 fade-in duration-300 ${isMinimized ? 'right-5' : 'left-1/2 -translate-x-1/2'}`}>
+        {isMinimized ? (
+        /* Minimized Floating Circle Badge */
         <button
           onClick={() => setIsMinimized(false)}
-          className="flex items-center justify-between gap-3 px-5 py-3 rounded-full bg-slate-900/95 border border-indigo-500/40 text-white shadow-2xl backdrop-blur-md hover:bg-slate-800 transition cursor-pointer active:scale-95 group min-w-[280px] sm:min-w-[360px] max-w-[90vw]"
+          className="relative flex flex-col items-center justify-center w-14 h-14 rounded-full bg-slate-900/95 border border-indigo-500/40 text-white shadow-2xl backdrop-blur-md hover:bg-slate-800 transition cursor-pointer active:scale-95 group"
           title="Klik untuk membuka detail unggahan"
         >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="relative flex items-center justify-center flex-shrink-0">
-              {isProcessingCloud ? (
-                <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />
-              ) : (
-                <UploadCloud className="w-4 h-4 text-indigo-400 animate-bounce" />
-              )}
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-500 rounded-full animate-ping" />
-            </div>
-            <span className="text-xs font-bold text-slate-200 truncate">
-              {currentFileIndex && fileCount > 1
-                ? `File ${currentFileIndex}/${fileCount} (${activePercent}%)`
-                : isProcessingCloud
-                  ? `Menyimpan ke Cloud ${fileCount} File (${activePercent}%)...`
-                  : `Mengunggah ${fileCount} File (${activePercent}%)`}
-            </span>
-          </div>
-          <ChevronUp className="w-4 h-4 text-slate-400 group-hover:text-white transition flex-shrink-0" />
+          {isProcessingCloud ? (
+            <Loader2 className="w-5 h-5 text-purple-400 animate-spin mb-0.5" />
+          ) : (
+            <UploadCloud className="w-5 h-5 text-indigo-400 animate-bounce mb-0.5" />
+          )}
+          <span className="text-[10px] font-bold text-slate-200 leading-none">{activePercent}%</span>
+          <span className="absolute top-0 right-0 w-3 h-3 bg-indigo-500 rounded-full animate-ping" />
+          <span className="absolute top-0 right-0 w-3 h-3 bg-indigo-500 rounded-full" />
         </button>
       ) : (
         /* Expanded Floating Card Popup */
-        <div className="w-[90vw] max-w-lg sm:w-[480px] rounded-2xl glass-card border border-indigo-500/30 p-4 sm:p-5 space-y-3.5 shadow-2xl backdrop-blur-xl relative bg-slate-950/90">
+        <div className="w-[95vw] max-w-2xl sm:w-[600px] min-h-[300px] sm:min-h-[350px] flex flex-col justify-between gap-8 rounded-3xl glass-card border border-indigo-500/30 p-8 sm:p-10 shadow-2xl backdrop-blur-xl relative bg-slate-950/90">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0">
@@ -88,13 +85,6 @@ export const BackgroundUploadWidget: React.FC<BackgroundUploadWidgetProps> = ({
                 title="Kecilkan (Minimize)"
               >
                 <ChevronDown className="w-4 h-4" />
-              </button>
-              <button
-                onClick={onCancelUpload}
-                className="p-1 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-950/40 transition cursor-pointer"
-                title="Batalkan Unggahan"
-              >
-                <X className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -126,7 +116,7 @@ export const BackgroundUploadWidget: React.FC<BackgroundUploadWidgetProps> = ({
             </div>
 
             {/* Explanatory Status Description */}
-            <p className="text-[10px] text-slate-400 leading-tight truncate" title={currentFileName || statusMessage}>
+            <p className="text-[10px] text-slate-400 leading-tight break-words" title={currentFileName || statusMessage}>
               {statusMessage ? (
                 <span className="text-indigo-300 font-medium">{statusMessage}</span>
               ) : currentFileName ? (
@@ -155,6 +145,7 @@ export const BackgroundUploadWidget: React.FC<BackgroundUploadWidgetProps> = ({
         </div>
       )}
     </div>
+    </>
   );
 };
 

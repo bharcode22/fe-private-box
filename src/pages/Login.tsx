@@ -150,12 +150,13 @@ export const Login: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                <div className="overflow-hidden rounded-xl">
+                <div className="flex justify-center w-full">
                   <GoogleLogin
                     onSuccess={handleGoogleSuccess}
                     onError={() => setAuthError('Login Google gagal atau dibatalkan')}
                     theme="filled_blue"
                     shape="pill"
+                    size="large"
                     text="continue_with"
                   />
                 </div>

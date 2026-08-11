@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Download, Share2, Edit2, Trash2, Eye, Folder, FileText, HardDrive, Calendar, CheckCircle, XCircle } from 'lucide-react';
 import type { FileItem, FolderItem } from '../../types';
+import { useLockBodyScroll } from '../../hooks/useLockBodyScroll';
 
 interface FileActionBottomSheetProps {
   isOpen: boolean;
@@ -33,6 +34,8 @@ export const FileActionBottomSheet: React.FC<FileActionBottomSheetProps> = ({
   onDeleteFolder,
   formatBytes,
 }) => {
+  useLockBodyScroll(isOpen);
+
   if (!isOpen || !targetItem) return null;
 
   const isFile = targetItem.type === 'file';
@@ -51,7 +54,7 @@ export const FileActionBottomSheet: React.FC<FileActionBottomSheetProps> = ({
       />
 
       {/* Slide-Up Sheet Container */}
-      <div className="relative w-full max-w-lg mx-auto bg-slate-900 border-t border-slate-800 rounded-t-3xl shadow-2xl z-50 overflow-hidden animate-slideUp pb-6">
+      <div className="relative w-full max-w-lg mx-auto bg-slate-900 border-t border-slate-800 rounded-t-3xl shadow-2xl z-50 overflow-hidden animate-slideUp pb-6 max-h-[90vh] flex flex-col">
         {/* Handle Bar Indicator */}
         <div className="w-full flex justify-center py-2.5">
           <div className="w-12 h-1.5 rounded-full bg-slate-700/80" />
@@ -102,7 +105,7 @@ export const FileActionBottomSheet: React.FC<FileActionBottomSheetProps> = ({
         )}
 
         {/* Action List Items */}
-        <div className="py-2 px-3 space-y-1">
+        <div className="py-2 px-3 space-y-1 overflow-y-auto overscroll-contain">
           {/* Pratinjau (Only for files) */}
           {isFile && onPreview && (
             <button

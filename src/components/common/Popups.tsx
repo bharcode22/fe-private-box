@@ -97,7 +97,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           </div>
           <div className="space-y-1">
             <h3 className="text-lg font-bold text-white">{title}</h3>
-            <p className="text-slate-400 text-xs leading-relaxed">{message}</p>
+            <div className="text-slate-400 text-xs leading-relaxed">{message}</div>
           </div>
         </div>
 

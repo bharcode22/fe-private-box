@@ -426,7 +426,7 @@ export const AccessFile: React.FC = () => {
                   onError={() => setAuthError('Login Google gagal atau dibatalkan')}
                   theme="filled_blue"
                   shape="pill"
-                  size="medium"
+                  size="large"
                   text="continue_with"
                 />
               </div>

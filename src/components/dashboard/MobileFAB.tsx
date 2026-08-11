@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, UploadCloud, FolderPlus, X } from 'lucide-react';
+import { useLockBodyScroll } from '../../hooks/useLockBodyScroll';
 
 interface MobileFABProps {
   onUploadClick: () => void;
@@ -11,6 +12,7 @@ export const MobileFAB: React.FC<MobileFABProps> = ({
   onCreateFolderClick,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  useLockBodyScroll(isOpen);
 
   return (
     <div className="fixed bottom-20 right-5 z-40 sm:hidden flex flex-col items-end">
