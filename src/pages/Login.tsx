@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, HardDrive, Users, ArrowRight, Sparkles, AlertCircle, Smartphone, Clock, Download } from 'lucide-react';
+import { ShieldCheck, HardDrive, Users, ArrowRight, Sparkles, AlertCircle, Smartphone, Clock, Download, ChevronDown } from 'lucide-react';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import api from '../services/api';
 import { Navbar } from '../components/layout/Navbar';
@@ -178,10 +178,20 @@ export const Login: React.FC = () => {
               </span>
             </div>
 
-            <h3 className="text-lg font-bold text-white mb-2">Aplikasi Mobile (Android & iOS)</h3>
-            <p className="text-slate-400 text-sm mb-4 leading-relaxed">
-              Download APK resmi hanya melalui situs ini. Hati-hati dan jangan percaya jika ada pihak tidak resmi yang mengatasnamakan Temporary Box.
-            </p>
+            <h3 className="text-lg font-bold text-white mb-2">Download Aplikasi Android</h3>
+
+            <details className="group mb-4 bg-slate-900/50 border border-slate-800 hover:border-slate-700 rounded-xl overflow-hidden transition-all duration-300">
+              <summary className="cursor-pointer p-3 sm:p-3.5 text-sm font-semibold text-slate-300 hover:text-white flex items-center justify-between select-none">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-400" />
+                  <span>Peringatan Keamanan</span>
+                </div>
+                <ChevronDown className="w-4 h-4 text-slate-500 group-open:rotate-180 transition-transform duration-300" />
+              </summary>
+              <div className="px-3 pb-3 sm:px-3.5 sm:pb-3.5 text-slate-400 text-xs leading-relaxed border-t border-slate-800/50 mt-1 pt-3 bg-slate-950/30">
+                Unduh APK resmi Temporary Box hanya melalui situs ini. Harap berhati-hati terhadap pihak atau situs tidak resmi yang mengatasnamakan Temporary Box. Pastikan Anda hanya mengunduh APK dari sumber resmi untuk menghindari risiko keamanan dan hal-hal yang tidak diinginkan. Pengelola Temporary Box tidak bertanggung jawab atas segala kerugian, kerusakan, atau risiko yang timbul akibat pengunduhan dan penggunaan APK yang diperoleh dari sumber yang tidak resmi atau tidak dikenal.
+              </div>
+            </details>
 
             <div className="mb-4">
               <button
