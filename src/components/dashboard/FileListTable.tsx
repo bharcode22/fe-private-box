@@ -834,11 +834,13 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                         />
                       </td>
                     )}
-                    <td className="px-6 py-4 font-semibold text-white flex items-center gap-3">
-                      <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-110 transition flex-shrink-0">
-                        <Folder className="w-4 h-4" />
+                    <td className="px-6 py-4 font-semibold text-white">
+                      <div className="flex items-center gap-3">
+                        <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-110 transition flex-shrink-0">
+                          <Folder className="w-4 h-4" />
+                        </div>
+                        <span className="truncate max-w-xs group-hover:text-amber-300 transition">{folder.name}</span>
                       </div>
-                      <span className="truncate max-w-xs group-hover:text-amber-300 transition">{folder.name}</span>
                     </td>
                     <td className="px-6 py-4 text-center">
                       {folder.shares && folder.shares.length > 0 ? (
@@ -926,11 +928,13 @@ export const FileListTable: React.FC<FileListTableProps> = ({
                           />
                         </td>
                       )}
-                      <td className="px-6 py-4 font-semibold text-white flex items-center gap-3">
-                        <div className={`p-1.5 rounded-lg border flex-shrink-0 ${colorClass}`}>
-                          <Icon className="w-4 h-4" />
+                      <td className="px-6 py-4 font-semibold text-white">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-1.5 rounded-lg border flex-shrink-0 ${colorClass}`}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <span className={`truncate max-w-xs transition ${textHoverClass}`}>{file.fileName}</span>
                         </div>
-                        <span className={`truncate max-w-xs transition ${textHoverClass}`}>{file.fileName}</span>
                       </td>
                       <td className="px-6 py-4 text-center">
                         {file.shares && file.shares.length > 0 ? (

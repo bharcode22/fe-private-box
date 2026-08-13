@@ -259,7 +259,16 @@ export const Dashboard: React.FC = () => {
       setHasMore(resFiles.data.pagination?.hasMore ?? false);
 
       const resFolders = await api.get(`/api/folders${currentFolderId ? `?parentId=${currentFolderId}` : ''}`);
-      setFolders(resFolders.data.folders);
+      let rawFolders: any[] = Array.isArray(resFolders.data)
+        ? resFolders.data
+        : resFolders.data?.folders || [];
+
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        rawFolders = rawFolders.filter((f) => f.name.toLowerCase().includes(q));
+      }
+
+      setFolders(rawFolders);
 
       const resLogs = await api.get('/api/logs');
       setAccessLogs(resLogs.data.logs);
